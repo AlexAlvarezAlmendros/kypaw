@@ -51,6 +51,7 @@ const AddVisitScreen = () => {
   const [initialLoading, setInitialLoading] = useState(isEditing);
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
   const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
 
   const {
@@ -116,6 +117,24 @@ const AddVisitScreen = () => {
       }
     }
     return true;
+  };
+
+  const handleTimeChange = (event: any, time?: Date) => {
+    setShowTimePicker(Platform.OS === 'ios');
+    if (time) {
+      const newDate = new Date(selectedDate);
+      newDate.setHours(time.getHours());
+      newDate.setMinutes(time.getMinutes());
+      setSelectedDate(newDate);
+      setValue('date', newDate);
+    }
+  };
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('es-ES', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   };
 
   const handlePickImage = async (source: 'camera' | 'gallery') => {
@@ -273,6 +292,25 @@ const AddVisitScreen = () => {
         )}
         {errors.date && (
           <Text style={styles.errorText}>{errors.date.message}</Text>
+        )}
+
+        {/* Botón de Hora */}
+        <TouchableOpacity
+          style={styles.dateButton}
+          onPress={() => setShowTimePicker(true)}
+        >
+          <MaterialCommunityIcons name="clock-outline" size={20} color={colors.primary} />
+          <Text style={styles.dateText}>
+            {formatTime(selectedDate)}
+          </Text>
+        </TouchableOpacity>
+        {showTimePicker && (
+          <DateTimePicker
+            value={selectedDate}
+            mode="time"
+            display="default"
+            onChange={handleTimeChange}
+          />
         )}
       </View>
 

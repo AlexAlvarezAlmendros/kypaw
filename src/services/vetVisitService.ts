@@ -36,6 +36,39 @@ export const getPetVisits = async (userId: string, petId: string): Promise<VetVi
   })) as VetVisit[];
 };
 
+// Obtener todas las visitas de todas las mascotas del usuario
+export const getUserVisits = async (userId: string): Promise<VetVisit[]> => {
+  try {
+    // Obtener todas las mascotas del usuario
+    const petsCol = collection(db, 'users', userId, 'pets');
+    const petsSnapshot = await getDocs(petsCol);
+    
+    const allVisits: VetVisit[] = [];
+    
+    // Para cada mascota, obtener sus visitas
+    for (const petDoc of petsSnapshot.docs) {
+      const petId = petDoc.id;
+      const visitsCol = getVisitsCollection(userId, petId);
+      const visitsSnapshot = await getDocs(visitsCol);
+      
+      const petVisits = visitsSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as VetVisit[];
+      
+      allVisits.push(...petVisits);
+    }
+    
+    // Ordenar por fecha descendente
+    allVisits.sort((a, b) => b.date.toMillis() - a.date.toMillis());
+    
+    return allVisits;
+  } catch (error) {
+    console.error('Error al obtener visitas del usuario:', error);
+    throw error;
+  }
+};
+
 // Obtener una visita por ID
 export const getVisit = async (
   userId: string,

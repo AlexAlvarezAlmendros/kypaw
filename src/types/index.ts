@@ -63,7 +63,7 @@ export interface Vaccine {
 }
 
 // Recordatorio
-export type ReminderType = 'MEDICATION' | 'VET_APPOINTMENT' | 'HYGIENE';
+export type ReminderType = 'MEDICATION' | 'HYGIENE' | 'FOOD';
 
 export interface Reminder {
   id: string;
@@ -83,6 +83,7 @@ export interface Reminder {
 export type RootStackParamList = {
   Auth: undefined;
   Main: undefined;
+  AddReminder: { reminderId?: string };
 };
 
 export type AuthStackParamList = {
