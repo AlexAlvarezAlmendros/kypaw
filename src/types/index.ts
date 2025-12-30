@@ -18,6 +18,7 @@ export interface Pet {
   name: string;
   species: 'Perro' | 'Gato' | 'Exótico';
   breed?: string;
+  gender?: 'Macho' | 'Hembra';
   birthDate: Timestamp;
   weight?: number;
   photoUrl?: string;

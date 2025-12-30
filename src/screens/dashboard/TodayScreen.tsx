@@ -2,10 +2,12 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { FAB } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, typography, spacing } from '../../constants/theme';
 import { Card } from '../../components/ui';
 
 const TodayScreen = () => {
+  const insets = useSafeAreaInsets();
   const today = new Date();
   const formattedDate = today.toLocaleDateString('es-ES', {
     weekday: 'long',
@@ -20,7 +22,7 @@ const TodayScreen = () => {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top + spacing.lg }]}>
           <Text style={styles.greeting}>Hola 👋</Text>
           <Text style={styles.date}>{capitalizedDate}</Text>
         </View>

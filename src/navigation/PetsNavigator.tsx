@@ -1,6 +1,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { PetsStackParamList } from '../types';
+import { colors } from '../constants/theme';
 import PetsListScreen from '../screens/pets/PetsListScreen';
 import PetDetailScreen from '../screens/pets/PetDetailScreen';
 import AddPetScreen from '../screens/pets/AddPetScreen';
@@ -15,17 +16,24 @@ const PetsNavigator = () => {
     <Stack.Navigator
       screenOptions={{
         headerShown: true,
+        headerStyle: {
+          backgroundColor: colors.primary,
+        },
+        headerTintColor: colors.surface,
+        headerTitleStyle: {
+          fontWeight: 'bold',
+        },
       }}
     >
       <Stack.Screen
         name="PetsList"
         component={PetsListScreen}
-        options={{ title: 'Mis Mascotas' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="PetDetail"
         component={PetDetailScreen}
-        options={{ title: 'Perfil' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="AddPet"
