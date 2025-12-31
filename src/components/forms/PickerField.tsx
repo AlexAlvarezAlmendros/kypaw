@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
-import { TextInput, Menu, HelperText } from 'react-native-paper';
-import { colors } from '../../constants/theme';
+import { TextInput, Menu, HelperText, useTheme } from 'react-native-paper';
 
 interface PickerOption {
   label: string;
@@ -25,6 +24,7 @@ export const PickerField: React.FC<PickerFieldProps> = ({
   error,
   placeholder = 'Selecciona una opción',
 }) => {
+  const theme = useTheme();
   const [visible, setVisible] = useState(false);
 
   const selectedOption = options.find(opt => opt.value === value);
@@ -54,7 +54,7 @@ export const PickerField: React.FC<PickerFieldProps> = ({
                 editable={false}
                 error={!!error}
                 right={<TextInput.Icon icon="menu-down" />}
-                style={styles.input}
+                style={[styles.input, { backgroundColor: theme.colors.surface }]}
               />
             </View>
           </TouchableOpacity>
@@ -82,7 +82,5 @@ const styles = StyleSheet.create({
   container: {
     marginBottom: 8,
   },
-  input: {
-    backgroundColor: colors.surface || 'transparent',
-  },
+  input: {},
 });

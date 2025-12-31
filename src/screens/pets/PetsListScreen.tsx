@@ -7,12 +7,11 @@ import {
   TouchableOpacity,
   Image,
 } from 'react-native';
-import { FAB, Searchbar, Chip } from 'react-native-paper';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { FAB, Searchbar, Chip, useTheme, Icon } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { colors, typography, spacing } from '../../constants/theme';
+import { spacing } from '../../constants/theme';
 import { Card, Loading } from '../../components/ui';
 import { useAuthStore } from '../../store/authStore';
 import { usePetStore } from '../../store/petStore';
@@ -22,6 +21,7 @@ import { calculateAge } from '../../utils/dateUtils';
 type PetsListNavigationProp = NativeStackNavigationProp<PetsStackParamList, 'PetsList'>;
 
 const PetsListScreen = () => {
+  const theme = useTheme();
   const navigation = useNavigation<PetsListNavigationProp>();
   const insets = useSafeAreaInsets();
   const { user } = useAuthStore();
@@ -75,11 +75,11 @@ const PetsListScreen = () => {
             {item.photoUrl ? (
               <Image source={{ uri: item.photoUrl }} style={styles.avatar} />
             ) : (
-              <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                <MaterialCommunityIcons
-                  name={getSpeciesIcon(item.species)}
+              <View style={[styles.avatar, styles.avatarPlaceholder, { backgroundColor: theme.colors.primaryContainer }]}>
+                <Icon
+                  source={getSpeciesIcon(item.species)}
                   size={40}
-                  color={colors.primary}
+                  color={theme.colors.primary}
                 />
               </View>
             )}
@@ -87,31 +87,31 @@ const PetsListScreen = () => {
 
           {/* Información */}
           <View style={styles.infoContainer}>
-            <Text style={styles.petName}>{item.name}</Text>
+            <Text style={[styles.petName, { color: theme.colors.onSurface }]}>{item.name}</Text>
             <View style={styles.detailsRow}>
               <Chip
                 icon={getSpeciesIcon(item.species)}
                 mode="flat"
-                style={styles.chip}
-                textStyle={styles.chipText}
+                style={[styles.chip, { backgroundColor: theme.colors.primaryContainer }]}
+                textStyle={[styles.chipText, { color: theme.colors.onPrimaryContainer }]}
                 compact
               >
                 {item.species}
               </Chip>
               {age && (
-                <Text style={styles.ageText}>{age}</Text>
+                <Text style={[styles.ageText, { color: theme.colors.onSurfaceVariant }]}>{age}</Text>
               )}
             </View>
             {item.breed && (
-              <Text style={styles.breedText}>{item.breed}</Text>
+              <Text style={[styles.breedText, { color: theme.colors.onSurfaceVariant }]}>{item.breed}</Text>
             )}
           </View>
 
           {/* Icono de navegación */}
-          <MaterialCommunityIcons
-            name="chevron-right"
+          <Icon
+            source="chevron-right"
             size={24}
-            color={colors.textSecondary}
+            color={theme.colors.onSurfaceVariant}
           />
         </View>
       </Card>
@@ -120,14 +120,13 @@ const PetsListScreen = () => {
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <MaterialCommunityIcons
-        name="paw-off"
+      <Icon
+        source="paw-off"
         size={80}
-        color={colors.textSecondary}
-        style={styles.emptyIcon}
+        color={theme.colors.onSurfaceVariant}
       />
-      <Text style={styles.emptyTitle}>No tienes mascotas aún</Text>
-      <Text style={styles.emptySubtitle}>
+      <Text style={[styles.emptyTitle, { color: theme.colors.onSurface }]}>No tienes mascotas aún</Text>
+      <Text style={[styles.emptySubtitle, { color: theme.colors.onSurfaceVariant }]}>
         Pulsa el botón + para añadir tu primera mascota
       </Text>
     </View>
@@ -135,14 +134,13 @@ const PetsListScreen = () => {
 
   const renderSearchEmptyState = () => (
     <View style={styles.emptyState}>
-      <MaterialCommunityIcons
-        name="magnify"
+      <Icon
+        source="magnify"
         size={80}
-        color={colors.textSecondary}
-        style={styles.emptyIcon}
+        color={theme.colors.onSurfaceVariant}
       />
-      <Text style={styles.emptyTitle}>No se encontraron mascotas</Text>
-      <Text style={styles.emptySubtitle}>
+      <Text style={[styles.emptyTitle, { color: theme.colors.onSurface }]}>No se encontraron mascotas</Text>
+      <Text style={[styles.emptySubtitle, { color: theme.colors.onSurfaceVariant }]}>
         Intenta con otro nombre
       </Text>
     </View>
@@ -153,11 +151,11 @@ const PetsListScreen = () => {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
-        <Text style={styles.headerTitle}>Mis Mascotas 🐾</Text>
-        <Text style={styles.headerSubtitle}>
+      <View style={[styles.header, { paddingTop: insets.top + spacing.md, backgroundColor: theme.colors.surface }]}>
+        <Text style={[styles.headerTitle, { color: theme.colors.onSurface }]}>Mis Mascotas 🐾</Text>
+        <Text style={[styles.headerSubtitle, { color: theme.colors.onSurfaceVariant }]}>
           {pets.length} {pets.length === 1 ? 'mascota' : 'mascotas'}
         </Text>
       </View>
@@ -169,8 +167,8 @@ const PetsListScreen = () => {
             placeholder="Buscar mascota..."
             onChangeText={setSearchQuery}
             value={searchQuery}
-            style={styles.searchbar}
-            iconColor={colors.primary}
+            style={[styles.searchbar, { backgroundColor: theme.colors.surfaceVariant }]}
+            iconColor={theme.colors.primary}
           />
         </View>
       )}
@@ -191,9 +189,9 @@ const PetsListScreen = () => {
       {/* Floating Action Button */}
       <FAB
         icon="plus"
-        style={styles.fab}
+        style={[styles.fab, { backgroundColor: theme.colors.primary }]}
         onPress={() => navigation.navigate('AddPet')}
-        color={colors.surface}
+        color={theme.colors.onPrimary}
         label="Añadir"
       />
     </View>
@@ -203,19 +201,16 @@ const PetsListScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   header: {
     padding: spacing.lg,
-    backgroundColor: colors.surface,
   },
   headerTitle: {
-    ...typography.h1,
-    color: colors.textPrimary,
+    fontSize: 28,
+    fontWeight: 'bold',
   },
   headerSubtitle: {
-    ...typography.body,
-    color: colors.textSecondary,
+    fontSize: 16,
     marginTop: spacing.xs,
   },
   searchContainer: {
@@ -223,7 +218,6 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
   },
   searchbar: {
-    backgroundColor: colors.surface,
     elevation: 2,
   },
   listContent: {
@@ -246,7 +240,6 @@ const styles = StyleSheet.create({
     borderRadius: 32,
   },
   avatarPlaceholder: {
-    backgroundColor: colors.primary + '20',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -254,8 +247,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   petName: {
-    ...typography.h3,
-    color: colors.textPrimary,
+    fontSize: 18,
+    fontWeight: '600',
     marginBottom: spacing.xs,
   },
   detailsRow: {
@@ -264,24 +257,18 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   chip: {
-    backgroundColor: colors.primary + '15',
     marginRight: spacing.sm,
   },
   chipText: {
-    ...typography.caption,
     fontSize: 12,
-    color: colors.primary,
     marginVertical: 0,
     paddingVertical: 0,
   },
   ageText: {
-    ...typography.body,
-    color: colors.textSecondary,
     fontSize: 13,
   },
   breedText: {
-    ...typography.caption,
-    color: colors.textSecondary,
+    fontSize: 14,
   },
   emptyState: {
     alignItems: 'center',
@@ -293,21 +280,20 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   emptyTitle: {
-    ...typography.h3,
-    color: colors.textPrimary,
+    fontSize: 18,
+    fontWeight: '600',
     marginBottom: spacing.sm,
+    marginTop: spacing.md,
     textAlign: 'center',
   },
   emptySubtitle: {
-    ...typography.body,
-    color: colors.textSecondary,
+    fontSize: 16,
     textAlign: 'center',
   },
   fab: {
     position: 'absolute',
     right: spacing.lg,
     bottom: spacing.lg,
-    backgroundColor: colors.primary,
   },
 });
 

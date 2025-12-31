@@ -7,11 +7,10 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import { FAB } from 'react-native-paper';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { FAB, useTheme, Icon } from 'react-native-paper';
 import { useRoute, useNavigation, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { colors, typography, spacing } from '../../constants/theme';
+import { spacing } from '../../constants/theme';
 import { Card, Loading } from '../../components/ui';
 import { useAuthStore } from '../../store/authStore';
 import { getPetVisits, deleteVisit } from '../../services/vetVisitService';
@@ -21,6 +20,7 @@ type HealthHistoryRouteProp = RouteProp<PetsStackParamList, 'HealthHistory'>;
 type HealthHistoryNavigationProp = NativeStackNavigationProp<PetsStackParamList, 'HealthHistory'>;
 
 const HealthHistoryScreen = () => {
+  const theme = useTheme();
   const route = useRoute<HealthHistoryRouteProp>();
   const navigation = useNavigation<HealthHistoryNavigationProp>();
   const { user } = useAuthStore();
@@ -95,15 +95,15 @@ const HealthHistoryScreen = () => {
       <Card style={styles.visitCard}>
         <View style={styles.cardHeader}>
           <View style={styles.headerLeft}>
-            <MaterialCommunityIcons
-              name="hospital-box"
+            <Icon
+              source="hospital-box"
               size={24}
-              color={colors.primary}
+              color={theme.colors.primary}
             />
             <View style={styles.headerInfo}>
-              <Text style={styles.visitDate}>{visitDate}</Text>
+              <Text style={[styles.visitDate, { color: theme.colors.onSurface }]}>{visitDate}</Text>
               {item.clinicName && (
-                <Text style={styles.clinicName}>{item.clinicName}</Text>
+                <Text style={[styles.clinicName, { color: theme.colors.onSurfaceVariant }]}>{item.clinicName}</Text>
               )}
             </View>
           </View>
@@ -112,20 +112,20 @@ const HealthHistoryScreen = () => {
               onPress={() => navigation.navigate('AddVisit', { petId, visitId: item.id })}
               style={styles.editButton}
             >
-              <MaterialCommunityIcons
-                name="pencil"
+              <Icon
+                source="pencil"
                 size={20}
-                color={colors.primary}
+                color={theme.colors.primary}
               />
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => handleDelete(item.id, visitDate)}
               style={styles.deleteButton}
             >
-              <MaterialCommunityIcons
-                name="delete-outline"
+              <Icon
+                source="delete-outline"
                 size={20}
-                color={colors.error}
+                color={theme.colors.error}
               />
             </TouchableOpacity>
           </View>
@@ -133,38 +133,38 @@ const HealthHistoryScreen = () => {
 
         <View style={styles.cardBody}>
           <View style={styles.infoRow}>
-            <Text style={styles.label}>Motivo:</Text>
-            <Text style={styles.value}>{item.reason}</Text>
+            <Text style={[styles.label, { color: theme.colors.onSurfaceVariant }]}>Motivo:</Text>
+            <Text style={[styles.value, { color: theme.colors.onSurface }]}>{item.reason}</Text>
           </View>
 
           {item.diagnosis && (
             <View style={styles.infoRow}>
-              <Text style={styles.label}>Diagnóstico:</Text>
-              <Text style={styles.value}>{item.diagnosis}</Text>
+              <Text style={[styles.label, { color: theme.colors.onSurfaceVariant }]}>Diagnóstico:</Text>
+              <Text style={[styles.value, { color: theme.colors.onSurface }]}>{item.diagnosis}</Text>
             </View>
           )}
 
           {item.vetName && (
             <View style={styles.infoRow}>
-              <Text style={styles.label}>Veterinario:</Text>
-              <Text style={styles.value}>{item.vetName}</Text>
+              <Text style={[styles.label, { color: theme.colors.onSurfaceVariant }]}>Veterinario:</Text>
+              <Text style={[styles.value, { color: theme.colors.onSurface }]}>{item.vetName}</Text>
             </View>
           )}
 
           {item.attachmentUrl && (
             <TouchableOpacity
-              style={styles.attachmentButton}
+              style={[styles.attachmentButton, { backgroundColor: theme.colors.primaryContainer }]}
               onPress={() => {
                 // TODO: Abrir imagen en modal o navegador
                 Alert.alert('Receta', 'Ver imagen (próximamente)');
               }}
             >
-              <MaterialCommunityIcons
-                name="paperclip"
+              <Icon
+                source="paperclip"
                 size={16}
-                color={colors.primary}
+                color={theme.colors.primary}
               />
-              <Text style={styles.attachmentText}>Ver receta adjunta</Text>
+              <Text style={[styles.attachmentText, { color: theme.colors.primary }]}>Ver receta adjunta</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -174,14 +174,13 @@ const HealthHistoryScreen = () => {
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <MaterialCommunityIcons
-        name="stethoscope"
+      <Icon
+        source="stethoscope"
         size={80}
-        color={colors.textSecondary}
-        style={styles.emptyIcon}
+        color={theme.colors.onSurfaceVariant}
       />
-      <Text style={styles.emptyTitle}>Sin historial médico</Text>
-      <Text style={styles.emptySubtitle}>
+      <Text style={[styles.emptyTitle, { color: theme.colors.onSurface }]}>Sin historial médico</Text>
+      <Text style={[styles.emptySubtitle, { color: theme.colors.onSurfaceVariant }]}>
         Pulsa el botón + para añadir la primera visita veterinaria
       </Text>
     </View>
@@ -192,7 +191,7 @@ const HealthHistoryScreen = () => {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <FlatList
         data={visits}
         renderItem={renderVisitCard}
@@ -205,9 +204,9 @@ const HealthHistoryScreen = () => {
 
       <FAB
         icon="plus"
-        style={styles.fab}
+        style={[styles.fab, { backgroundColor: theme.colors.primary }]}
         onPress={() => navigation.navigate('AddVisit', { petId })}
-        color={colors.surface}
+        color={theme.colors.onPrimary}
         label="Nueva Visita"
       />
     </View>
@@ -217,7 +216,6 @@ const HealthHistoryScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   listContent: {
     padding: spacing.lg,
@@ -242,13 +240,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   visitDate: {
-    ...typography.h3,
-    color: colors.textPrimary,
     fontSize: 16,
+    fontWeight: '600',
   },
   clinicName: {
-    ...typography.caption,
-    color: colors.textSecondary,
+    fontSize: 14,
     marginTop: 2,
   },
   headerActions: {
@@ -269,13 +265,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   label: {
-    ...typography.button,
-    color: colors.textSecondary,
+    fontSize: 14,
+    fontWeight: '500',
     width: 100,
   },
   value: {
-    ...typography.body,
-    color: colors.textPrimary,
+    fontSize: 16,
     flex: 1,
   },
   attachmentButton: {
@@ -283,12 +278,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: spacing.sm,
     padding: spacing.sm,
-    backgroundColor: colors.primary + '15',
     borderRadius: 8,
   },
   attachmentText: {
-    ...typography.button,
-    color: colors.primary,
+    fontSize: 14,
+    fontWeight: '500',
     marginLeft: spacing.xs,
   },
   emptyState: {
@@ -301,21 +295,20 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   emptyTitle: {
-    ...typography.h3,
-    color: colors.textPrimary,
+    fontSize: 18,
+    fontWeight: '600',
     marginBottom: spacing.sm,
+    marginTop: spacing.md,
     textAlign: 'center',
   },
   emptySubtitle: {
-    ...typography.body,
-    color: colors.textSecondary,
+    fontSize: 16,
     textAlign: 'center',
   },
   fab: {
     position: 'absolute',
     right: spacing.lg,
     bottom: spacing.lg,
-    backgroundColor: colors.primary,
   },
 });
 

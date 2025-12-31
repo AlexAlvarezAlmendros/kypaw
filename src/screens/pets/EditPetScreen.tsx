@@ -17,9 +17,9 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Timestamp } from 'firebase/firestore';
-import { colors, typography, spacing } from '../../constants/theme';
+import { useTheme, Icon } from 'react-native-paper';
+import { spacing } from '../../constants/theme';
 import { Button, Input, Loading } from '../../components/ui';
 import { petSchema } from '../../utils/validation';
 import { useAuthStore } from '../../store/authStore';
@@ -34,6 +34,7 @@ type EditPetNavigationProp = NativeStackNavigationProp<PetsStackParamList, 'Edit
 type PetFormData = z.infer<typeof petSchema>;
 
 const EditPetScreen = () => {
+  const theme = useTheme();
   const navigation = useNavigation<EditPetNavigationProp>();
   const route = useRoute<EditPetRouteProp>();
   const { user } = useAuthStore();
@@ -211,7 +212,7 @@ const EditPetScreen = () => {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView
@@ -227,13 +228,13 @@ const EditPetScreen = () => {
             {photoUri ? (
               <Image source={{ uri: photoUri }} style={styles.photo} />
             ) : (
-              <View style={styles.photoPlaceholder}>
-                <MaterialCommunityIcons
-                  name="camera-plus"
+              <View style={[styles.photoPlaceholder, { backgroundColor: theme.colors.primaryContainer, borderColor: theme.colors.primary }]}>
+                <Icon
+                  source="camera-plus"
                   size={40}
-                  color={colors.primary}
+                  color={theme.colors.primary}
                 />
-                <Text style={styles.photoText}>Cambiar Foto</Text>
+                <Text style={[styles.photoText, { color: theme.colors.primary }]}>Cambiar Foto</Text>
               </View>
             )}
           </TouchableOpacity>
@@ -258,7 +259,7 @@ const EditPetScreen = () => {
           />
 
           {/* Especie */}
-          <Text style={styles.fieldLabel}>Especie *</Text>
+          <Text style={[styles.fieldLabel, { color: theme.colors.onSurface }]}>Especie *</Text>
           <Controller
             control={control}
             name="species"
@@ -304,18 +305,17 @@ const EditPetScreen = () => {
           />
 
           {/* Fecha de Nacimiento */}
-          <Text style={styles.fieldLabel}>Fecha de Nacimiento *</Text>
+          <Text style={[styles.fieldLabel, { color: theme.colors.onSurface }]}>Fecha de Nacimiento *</Text>
           <TouchableOpacity
-            style={styles.dateButton}
+            style={[styles.dateButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outline }]}
             onPress={() => setShowDatePicker(true)}
           >
-            <MaterialCommunityIcons
-              name="calendar"
+            <Icon
+              source="calendar"
               size={20}
-              color={colors.primary}
-              style={styles.dateIcon}
+              color={theme.colors.primary}
             />
-            <Text style={styles.dateText}>
+            <Text style={[styles.dateText, { color: theme.colors.onSurface }]}>
               {birthDate.toLocaleDateString('es-ES', {
                 day: '2-digit',
                 month: 'long',
@@ -390,16 +390,16 @@ const EditPetScreen = () => {
             
             {/* Botón Eliminar */}
             <TouchableOpacity
-              style={styles.deleteButton}
+              style={[styles.deleteButton, { borderColor: theme.colors.error, backgroundColor: theme.colors.background }]}
               onPress={handleDelete}
               disabled={loading}
             >
-              <MaterialCommunityIcons
-                name="delete"
+              <Icon
+                source="delete"
                 size={20}
-                color={colors.error}
+                color={theme.colors.error}
               />
-              <Text style={styles.deleteText}>Eliminar Mascota</Text>
+              <Text style={[styles.deleteText, { color: theme.colors.error }]}>Eliminar Mascota</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -411,7 +411,6 @@ const EditPetScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   scrollContent: {
     padding: spacing.lg,
@@ -434,24 +433,22 @@ const styles = StyleSheet.create({
   photoPlaceholder: {
     width: '100%',
     height: '100%',
-    backgroundColor: colors.primary + '20',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: colors.primary,
     borderStyle: 'dashed',
+    borderRadius: 60,
   },
   photoText: {
-    ...typography.caption,
-    color: colors.primary,
+    fontSize: 12,
     marginTop: spacing.xs,
   },
   form: {
     gap: spacing.md,
   },
   fieldLabel: {
-    ...typography.button,
-    color: colors.textPrimary,
+    fontSize: 14,
+    fontWeight: '500',
     marginBottom: spacing.xs,
   },
   segmentedButtons: {
@@ -460,18 +457,13 @@ const styles = StyleSheet.create({
   dateButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
     padding: spacing.md,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: colors.textSecondary + '40',
-  },
-  dateIcon: {
-    marginRight: spacing.sm,
+    gap: spacing.sm,
   },
   dateText: {
-    ...typography.body,
-    color: colors.textPrimary,
+    fontSize: 16,
   },
   buttonContainer: {
     marginTop: spacing.lg,
@@ -488,12 +480,10 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: colors.error,
-    backgroundColor: colors.background,
   },
   deleteText: {
-    ...typography.button,
-    color: colors.error,
+    fontSize: 14,
+    fontWeight: '500',
     marginLeft: spacing.sm,
   },
 });

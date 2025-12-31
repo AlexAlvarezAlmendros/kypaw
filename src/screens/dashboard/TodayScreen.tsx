@@ -1,11 +1,10 @@
 import React, { useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
-import { FAB, ActivityIndicator } from 'react-native-paper';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { FAB, ActivityIndicator, useTheme, Icon } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { colors, typography, spacing } from '../../constants/theme';
+import { spacing } from '../../constants/theme';
 import { useAuthStore } from '../../store/authStore';
 import { useTodayItems } from '../../hooks';
 import { ReminderItem, VisitItem } from '../../components/ui';
@@ -13,27 +12,28 @@ import { Reminder, VetVisit, RootStackParamList } from '../../types';
 
 type TodayScreenProp = NativeStackNavigationProp<RootStackParamList>;
 
-const getReminderColor = (type: string): string => {
-  switch (type) {
-    case 'MEDICATION':
-      return colors.primary;
-    case 'HYGIENE':
-      return '#10B981';
-    case 'FOOD':
-      return '#F59E0B';
-    case 'VISIT':
-      return colors.error;
-    default:
-      return colors.textSecondary;
-  }
-};
-
 const TodayScreen = () => {
+  const theme = useTheme();
   const navigation = useNavigation<TodayScreenProp>();
   const insets = useSafeAreaInsets();
   const user = useAuthStore((state) => state.user);
 
   const { items: todayItems, loading, refreshing, refresh, toggleReminderComplete } = useTodayItems(user?.uid);
+
+  const getReminderColor = useCallback((type: string): string => {
+    switch (type) {
+      case 'MEDICATION':
+        return theme.colors.primary;
+      case 'HYGIENE':
+        return theme.colors.secondary;
+      case 'FOOD':
+        return '#F59E0B';
+      case 'VISIT':
+        return theme.colors.error;
+      default:
+        return theme.colors.onSurfaceVariant;
+    }
+  }, [theme]);
 
   // Memoizar fecha formateada
   const capitalizedDate = useMemo(() => {
@@ -65,36 +65,35 @@ const TodayScreen = () => {
   }, [navigation]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <ScrollView 
         contentContainerStyle={styles.scrollContent}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={refresh} />
         }
       >
-        <View style={[styles.header, { paddingTop: insets.top + spacing.lg }]}>
-          <Text style={styles.greeting}>Hola 👋</Text>
-          <Text style={styles.date}>{capitalizedDate}</Text>
+        <View style={[styles.header, { paddingTop: insets.top + spacing.lg, backgroundColor: theme.colors.surface }]}>
+          <Text style={[styles.greeting, { color: theme.colors.onSurface }]}>Hola 👋</Text>
+          <Text style={[styles.date, { color: theme.colors.onSurfaceVariant }]}>{capitalizedDate}</Text>
         </View>
 
         <View style={styles.body}>
-          <Text style={styles.sectionTitle}>Tareas de Hoy</Text>
+          <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>Tareas de Hoy</Text>
 
           {loading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={colors.primary} />
+              <ActivityIndicator size="large" color={theme.colors.primary} />
             </View>
           ) : todayItems.length === 0 ? (
             /* Empty State */
             <View style={styles.emptyState}>
-              <MaterialCommunityIcons
-                name="calendar-check"
+              <Icon
+                source="calendar-check"
                 size={80}
-                color={colors.textSecondary}
-                style={styles.emptyIcon}
+                color={theme.colors.onSurfaceVariant}
               />
-              <Text style={styles.emptyTitle}>¡Todo tranquilo por aquí!</Text>
-              <Text style={styles.emptySubtitle}>
+              <Text style={[styles.emptyTitle, { color: theme.colors.onSurface }]}>¡Todo tranquilo por aquí!</Text>
+              <Text style={[styles.emptySubtitle, { color: theme.colors.onSurfaceVariant }]}>
                 No tienes tareas programadas para hoy.{'\n'}
                 Usa el botón + para agregar recordatorios.
               </Text>
@@ -140,9 +139,9 @@ const TodayScreen = () => {
       {/* Floating Action Button */}
       <FAB
         icon="plus"
-        style={styles.fab}
+        style={[styles.fab, { backgroundColor: theme.colors.primary }]}
         onPress={handleAddReminder}
-        color={colors.surface}
+        color={theme.colors.onPrimary}
       />
     </View>
   );
@@ -151,7 +150,6 @@ const TodayScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   scrollContent: {
     flexGrow: 1,
@@ -159,23 +157,21 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: spacing.lg,
-    backgroundColor: colors.surface,
   },
   greeting: {
-    ...typography.h1,
-    color: colors.textPrimary,
+    fontSize: 28,
+    fontWeight: 'bold',
   },
   date: {
-    ...typography.body,
-    color: colors.textSecondary,
+    fontSize: 16,
     marginTop: spacing.xs,
   },
   body: {
     padding: spacing.lg,
   },
   sectionTitle: {
-    ...typography.h2,
-    color: colors.textPrimary,
+    fontSize: 20,
+    fontWeight: '600',
     marginBottom: spacing.md,
   },
   loadingContainer: {
@@ -191,14 +187,14 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   emptyTitle: {
-    ...typography.h3,
-    color: colors.textPrimary,
+    fontSize: 18,
+    fontWeight: '600',
     marginBottom: spacing.sm,
+    marginTop: spacing.md,
     textAlign: 'center',
   },
   emptySubtitle: {
-    ...typography.body,
-    color: colors.textSecondary,
+    fontSize: 16,
     textAlign: 'center',
     paddingHorizontal: spacing.lg,
   },
@@ -209,7 +205,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: spacing.lg,
     bottom: spacing.lg,
-    backgroundColor: colors.primary,
   },
 });
 

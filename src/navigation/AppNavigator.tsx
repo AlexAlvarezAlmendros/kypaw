@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useTheme } from 'react-native-paper';
 import { useAuthStore } from '../store/authStore';
 import { Loading } from '../components/ui';
 import AuthNavigator from './AuthNavigator';
@@ -11,6 +12,7 @@ import { RootStackParamList } from '../types';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const AppNavigator = () => {
+  const theme = useTheme();
   const { user, isLoading } = useAuthStore();
 
   if (isLoading) {
@@ -30,6 +32,13 @@ const AppNavigator = () => {
                 headerShown: true,
                 title: 'Nuevo Recordatorio',
                 presentation: 'modal',
+                headerStyle: {
+                  backgroundColor: theme.colors.primary,
+                },
+                headerTintColor: theme.colors.onPrimary,
+                headerTitleStyle: {
+                  fontWeight: 'bold',
+                },
               }}
             />
           </>

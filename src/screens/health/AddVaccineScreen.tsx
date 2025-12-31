@@ -8,8 +8,7 @@ import {
   Alert,
   Platform,
 } from 'react-native';
-import { TextInput, Button, Switch } from 'react-native-paper';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { TextInput, Button, Switch, useTheme, Icon } from 'react-native-paper';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useForm, Controller } from 'react-hook-form';
@@ -17,7 +16,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Timestamp } from 'firebase/firestore';
-import { colors, typography, spacing } from '../../constants/theme';
+import { spacing } from '../../constants/theme';
 import { Loading } from '../../components/ui';
 import { useAuthStore } from '../../store/authStore';
 import { createVaccine } from '../../services/vaccineService';
@@ -51,6 +50,7 @@ const vaccineSchema = z.object({
 type VaccineFormData = z.infer<typeof vaccineSchema>;
 
 const AddVaccineScreen = () => {
+  const theme = useTheme();
   const route = useRoute<AddVaccineRouteProp>();
   const navigation = useNavigation<AddVaccineNavigationProp>();
   const { user } = useAuthStore();
@@ -117,8 +117,8 @@ const AddVaccineScreen = () => {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.sectionTitle}>Información de la Vacuna</Text>
+    <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]} contentContainerStyle={styles.content}>
+      <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>Información de la Vacuna</Text>
 
       {/* Nombre de la vacuna */}
       <Controller
@@ -132,26 +132,24 @@ const AddVaccineScreen = () => {
             onChangeText={onChange}
             onBlur={onBlur}
             error={!!errors.name}
-            style={styles.input}
-            outlineColor={colors.border}
-            activeOutlineColor={colors.primary}
+            style={[styles.input, { backgroundColor: theme.colors.surface }]}
             placeholder="ej. Rabia, Parvovirus, Leucemia felina..."
           />
         )}
       />
       {errors.name && (
-        <Text style={styles.errorText}>{errors.name.message}</Text>
+        <Text style={[styles.errorText, { color: theme.colors.error }]}>{errors.name.message}</Text>
       )}
 
       {/* Fecha de administración */}
       <View style={styles.inputContainer}>
-        <Text style={styles.label}>Fecha de administración *</Text>
+        <Text style={[styles.label, { color: theme.colors.onSurface }]}>Fecha de administración *</Text>
         <TouchableOpacity
-          style={styles.dateButton}
+          style={[styles.dateButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outline }]}
           onPress={() => setShowAdministeredPicker(true)}
         >
-          <MaterialCommunityIcons name="calendar" size={20} color={colors.primary} />
-          <Text style={styles.dateText}>
+          <Icon source="calendar" size={20} color={theme.colors.primary} />
+          <Text style={[styles.dateText, { color: theme.colors.onSurface }]}>
             {administeredDate.toLocaleDateString('es-ES', {
               day: '2-digit',
               month: 'long',
@@ -173,19 +171,19 @@ const AddVaccineScreen = () => {
           />
         )}
         {errors.administeredDate && (
-          <Text style={styles.errorText}>{errors.administeredDate.message}</Text>
+          <Text style={[styles.errorText, { color: theme.colors.error }]}>{errors.administeredDate.message}</Text>
         )}
       </View>
 
       {/* Switch para próxima dosis */}
-      <View style={styles.switchContainer}>
+      <View style={[styles.switchContainer, { backgroundColor: theme.colors.surface }]}>
         <View style={styles.switchLabel}>
-          <MaterialCommunityIcons
-            name="calendar-clock"
+          <Icon
+            source="calendar-clock"
             size={20}
-            color={colors.textPrimary}
+            color={theme.colors.onSurface}
           />
-          <Text style={styles.label}>¿Requiere próxima dosis?</Text>
+          <Text style={[styles.label, { color: theme.colors.onSurface }]}>¿Requiere próxima dosis?</Text>
         </View>
         <Controller
           control={control}
@@ -194,7 +192,6 @@ const AddVaccineScreen = () => {
             <Switch
               value={value}
               onValueChange={onChange}
-              color={colors.primary}
             />
           )}
         />
@@ -203,13 +200,13 @@ const AddVaccineScreen = () => {
       {/* Fecha de próxima dosis (condicional) */}
       {hasNextDose && (
         <View style={styles.inputContainer}>
-          <Text style={styles.label}>Fecha de próxima dosis</Text>
+          <Text style={[styles.label, { color: theme.colors.onSurface }]}>Fecha de próxima dosis</Text>
           <TouchableOpacity
-            style={styles.dateButton}
+            style={[styles.dateButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outline }]}
             onPress={() => setShowNextDosePicker(true)}
           >
-            <MaterialCommunityIcons name="calendar-clock" size={20} color={colors.primary} />
-            <Text style={styles.dateText}>
+            <Icon source="calendar-clock" size={20} color={theme.colors.primary} />
+            <Text style={[styles.dateText, { color: theme.colors.onSurface }]}>
               {nextDoseDate?.toLocaleDateString('es-ES', {
                 day: '2-digit',
                 month: 'long',
@@ -232,20 +229,19 @@ const AddVaccineScreen = () => {
             />
           )}
           {errors.nextDoseDate && (
-            <Text style={styles.errorText}>{errors.nextDoseDate.message}</Text>
+            <Text style={[styles.errorText, { color: theme.colors.error }]}>{errors.nextDoseDate.message}</Text>
           )}
         </View>
       )}
 
       {/* Información adicional */}
-      <View style={styles.infoBox}>
-        <MaterialCommunityIcons
-          name="information"
+      <View style={[styles.infoBox, { backgroundColor: theme.colors.primaryContainer }]}>
+        <Icon
+          source="information"
           size={20}
-          color={colors.primary}
-          style={styles.infoIcon}
+          color={theme.colors.primary}
         />
-        <Text style={styles.infoText}>
+        <Text style={[styles.infoText, { color: theme.colors.onPrimaryContainer }]}>
           Las vacunas con próxima dosis te avisarán cuando se acerque la fecha de revacunación.
         </Text>
       </View>
@@ -268,15 +264,14 @@ const AddVaccineScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   content: {
     padding: spacing.lg,
     paddingBottom: spacing.xl * 2,
   },
   sectionTitle: {
-    ...typography.h3,
-    color: colors.textPrimary,
+    fontSize: 18,
+    fontWeight: '600',
     marginTop: spacing.md,
     marginBottom: spacing.md,
   },
@@ -284,26 +279,22 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   label: {
-    ...typography.button,
-    color: colors.textPrimary,
+    fontSize: 14,
+    fontWeight: '500',
     marginBottom: spacing.xs,
   },
   input: {
     marginBottom: spacing.md,
-    backgroundColor: colors.surface,
   },
   dateButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.border,
     borderRadius: 8,
     padding: spacing.md,
   },
   dateText: {
-    ...typography.body,
-    color: colors.textPrimary,
+    fontSize: 16,
     marginLeft: spacing.sm,
     flex: 1,
   },
@@ -311,7 +302,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: colors.surface,
     padding: spacing.md,
     borderRadius: 8,
     marginBottom: spacing.md,
@@ -323,37 +313,31 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   errorText: {
-    ...typography.caption,
-    color: colors.error,
+    fontSize: 12,
     marginTop: spacing.xs,
     marginLeft: spacing.sm,
   },
   infoBox: {
     flexDirection: 'row',
-    backgroundColor: colors.primary + '15',
     padding: spacing.md,
     borderRadius: 8,
     marginVertical: spacing.lg,
-  },
-  infoIcon: {
-    marginRight: spacing.sm,
+    gap: spacing.sm,
   },
   infoText: {
-    ...typography.caption,
-    color: colors.textPrimary,
+    fontSize: 12,
     flex: 1,
   },
   submitButton: {
     marginTop: spacing.lg,
-    backgroundColor: colors.primary,
     borderRadius: 12,
   },
   submitButtonContent: {
     paddingVertical: spacing.sm,
   },
   submitButtonLabel: {
-    ...typography.button,
     fontSize: 16,
+    fontWeight: '500',
   },
 });
 

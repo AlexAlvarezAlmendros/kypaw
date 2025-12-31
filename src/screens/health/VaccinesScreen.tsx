@@ -7,11 +7,10 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import { FAB, Chip } from 'react-native-paper';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { FAB, Chip, useTheme, Icon } from 'react-native-paper';
 import { useRoute, useNavigation, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { colors, typography, spacing } from '../../constants/theme';
+import { spacing } from '../../constants/theme';
 import { Card, Loading } from '../../components/ui';
 import { useAuthStore } from '../../store/authStore';
 import { getPetVaccines, deleteVaccine, getVaccineStatus } from '../../services/vaccineService';
@@ -21,6 +20,7 @@ type VaccinesRouteProp = RouteProp<PetsStackParamList, 'Vaccines'>;
 type VaccinesNavigationProp = NativeStackNavigationProp<PetsStackParamList, 'Vaccines'>;
 
 const VaccinesScreen = () => {
+  const theme = useTheme();
   const route = useRoute<VaccinesRouteProp>();
   const navigation = useNavigation<VaccinesNavigationProp>();
   const { user } = useAuthStore();
@@ -89,7 +89,7 @@ const VaccinesScreen = () => {
       case 'valid':
         return {
           label: 'Vigente',
-          color: colors.success,
+          color: theme.colors.secondary,
           icon: 'check-circle' as const,
         };
       case 'upcoming':
@@ -101,7 +101,7 @@ const VaccinesScreen = () => {
       case 'expired':
         return {
           label: 'Vencida',
-          color: colors.error,
+          color: theme.colors.error,
           icon: 'close-circle' as const,
         };
     }
@@ -121,14 +121,14 @@ const VaccinesScreen = () => {
       <Card style={styles.vaccineCard}>
         <View style={styles.cardHeader}>
           <View style={styles.headerLeft}>
-            <MaterialCommunityIcons
-              name="needle"
+            <Icon
+              source="needle"
               size={24}
-              color={colors.primary}
+              color={theme.colors.primary}
             />
             <View style={styles.headerInfo}>
-              <Text style={styles.vaccineName}>{item.name}</Text>
-              <Text style={styles.vaccineDate}>{administeredDate}</Text>
+              <Text style={[styles.vaccineName, { color: theme.colors.onSurface }]}>{item.name}</Text>
+              <Text style={[styles.vaccineDate, { color: theme.colors.onSurfaceVariant }]}>{administeredDate}</Text>
             </View>
           </View>
           <View style={styles.headerRight}>
@@ -144,10 +144,10 @@ const VaccinesScreen = () => {
               onPress={() => handleDelete(item.id, item.name)}
               style={styles.deleteButton}
             >
-              <MaterialCommunityIcons
-                name="delete-outline"
+              <Icon
+                source="delete-outline"
                 size={20}
-                color={colors.error}
+                color={theme.colors.error}
               />
             </TouchableOpacity>
           </View>
@@ -156,12 +156,12 @@ const VaccinesScreen = () => {
         {item.nextDoseDate && (
           <View style={styles.cardBody}>
             <View style={styles.infoRow}>
-              <MaterialCommunityIcons
-                name="calendar-clock"
+              <Icon
+                source="calendar-clock"
                 size={16}
-                color={colors.textSecondary}
+                color={theme.colors.onSurfaceVariant}
               />
-              <Text style={styles.label}>Próxima dosis:</Text>
+              <Text style={[styles.label, { color: theme.colors.onSurfaceVariant }]}>Próxima dosis:</Text>
               <Text style={[styles.value, { color: statusInfo.color }]}>
                 {item.nextDoseDate.toDate().toLocaleDateString('es-ES', {
                   day: '2-digit',
@@ -178,14 +178,13 @@ const VaccinesScreen = () => {
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <MaterialCommunityIcons
-        name="needle"
+      <Icon
+        source="needle"
         size={80}
-        color={colors.textSecondary}
-        style={styles.emptyIcon}
+        color={theme.colors.onSurfaceVariant}
       />
-      <Text style={styles.emptyTitle}>Sin vacunas registradas</Text>
-      <Text style={styles.emptySubtitle}>
+      <Text style={[styles.emptyTitle, { color: theme.colors.onSurface }]}>Sin vacunas registradas</Text>
+      <Text style={[styles.emptySubtitle, { color: theme.colors.onSurfaceVariant }]}>
         Pulsa el botón + para añadir la primera vacuna
       </Text>
     </View>
@@ -196,7 +195,7 @@ const VaccinesScreen = () => {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <FlatList
         data={vaccines}
         renderItem={renderVaccineCard}
@@ -209,9 +208,9 @@ const VaccinesScreen = () => {
 
       <FAB
         icon="plus"
-        style={styles.fab}
+        style={[styles.fab, { backgroundColor: theme.colors.primary }]}
         onPress={() => navigation.navigate('AddVaccine', { petId })}
-        color={colors.surface}
+        color={theme.colors.onPrimary}
         label="Nueva Vacuna"
       />
     </View>
@@ -221,7 +220,6 @@ const VaccinesScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   listContent: {
     padding: spacing.lg,
@@ -246,13 +244,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   vaccineName: {
-    ...typography.h3,
-    color: colors.textPrimary,
     fontSize: 16,
+    fontWeight: '600',
   },
   vaccineDate: {
-    ...typography.caption,
-    color: colors.textSecondary,
+    fontSize: 14,
     marginTop: 2,
   },
   headerRight: {
@@ -274,12 +270,11 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   label: {
-    ...typography.caption,
-    color: colors.textSecondary,
+    fontSize: 14,
   },
   value: {
-    ...typography.button,
-    fontSize: 13,
+    fontSize: 14,
+    fontWeight: '500',
   },
   emptyState: {
     alignItems: 'center',
@@ -291,21 +286,20 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   emptyTitle: {
-    ...typography.h3,
-    color: colors.textPrimary,
+    fontSize: 18,
+    fontWeight: '600',
     marginBottom: spacing.sm,
+    marginTop: spacing.md,
     textAlign: 'center',
   },
   emptySubtitle: {
-    ...typography.body,
-    color: colors.textSecondary,
+    fontSize: 16,
     textAlign: 'center',
   },
   fab: {
     position: 'absolute',
     right: spacing.lg,
     bottom: spacing.lg,
-    backgroundColor: colors.primary,
   },
 });
 

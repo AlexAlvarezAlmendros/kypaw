@@ -26,6 +26,7 @@ import {
   SegmentedButtons,
   Chip,
   Divider,
+  useTheme,
 } from 'react-native-paper';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -41,7 +42,7 @@ import {
   requestNotificationPermissions,
 } from '../../services/notificationService';
 import { RootStackParamList, ReminderType } from '../../types';
-import { colors, spacing } from '../../constants/theme';
+import { spacing } from '../../constants/theme';
 
 type AddReminderScreenProp = NativeStackNavigationProp<RootStackParamList>;
 type AddReminderRouteProp = RouteProp<RootStackParamList, 'AddReminder'>;
@@ -61,6 +62,7 @@ const FREQUENCIES = [
 ];
 
 export default function AddReminderScreen() {
+  const theme = useTheme();
   const navigation = useNavigation<AddReminderScreenProp>();
   const route = useRoute<AddReminderRouteProp>();
   const { reminderId } = route.params || {};
@@ -305,7 +307,7 @@ export default function AddReminderScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
@@ -315,7 +317,7 @@ export default function AddReminderScreen() {
             ¿Para quién es el recordatorio?
           </Text>
           {pets.length === 0 ? (
-            <Text style={styles.emptyText}>
+            <Text style={[styles.emptyText, { color: theme.colors.onSurfaceVariant }]}>
               No tienes mascotas registradas. Añade una mascota primero.
             </Text>
           ) : (
@@ -465,7 +467,6 @@ export default function AddReminderScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   scrollView: {
     flex: 1,
@@ -491,7 +492,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   emptyText: {
-    color: colors.textSecondary,
     fontStyle: 'italic',
     marginTop: spacing.sm,
   },

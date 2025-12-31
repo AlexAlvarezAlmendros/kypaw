@@ -1,7 +1,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { PetsStackParamList } from '../types';
-import { colors } from '../constants/theme';
+import { useTheme } from 'react-native-paper';
 import PetsListScreen from '../screens/pets/PetsListScreen';
 import PetDetailScreen from '../screens/pets/PetDetailScreen';
 import AddPetScreen from '../screens/pets/AddPetScreen';
@@ -14,14 +14,16 @@ import AddVaccineScreen from '../screens/health/AddVaccineScreen';
 const Stack = createNativeStackNavigator<PetsStackParamList>();
 
 const PetsNavigator = () => {
+  const theme = useTheme();
+
   return (
     <Stack.Navigator
       screenOptions={{
         headerShown: true,
         headerStyle: {
-          backgroundColor: colors.primary,
+          backgroundColor: theme.colors.primary,
         },
-        headerTintColor: colors.surface,
+        headerTintColor: theme.colors.onPrimary,
         headerTitleStyle: {
           fontWeight: 'bold',
         },

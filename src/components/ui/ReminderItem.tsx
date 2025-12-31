@@ -1,8 +1,7 @@
 import React, { memo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Checkbox, Chip } from 'react-native-paper';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { colors, typography, spacing } from '../../constants/theme';
+import { Checkbox, Chip, Icon, useTheme } from 'react-native-paper';
+import { spacing } from '../../constants/theme';
 import { Reminder } from '../../types';
 import { TodayItem } from '../../hooks/useTodayItems';
 
@@ -19,28 +18,29 @@ const ReminderItemComponent: React.FC<ReminderItemProps> = ({
   onToggleComplete,
   showConnectorLine,
 }) => {
+  const theme = useTheme();
   const reminder = item.data as Reminder;
 
   return (
     <View style={styles.timelineItem}>
       <View style={styles.timelineLeft}>
-        <Text style={styles.timeText}>{item.time}</Text>
+        <Text style={[styles.timeText, { color: theme.colors.onSurfaceVariant }]}>{item.time}</Text>
         <View style={[styles.timelineDot, { backgroundColor: reminderColor }]} />
-        {showConnectorLine && <View style={styles.timelineLine} />}
+        {showConnectorLine && <View style={[styles.timelineLine, { backgroundColor: theme.colors.outlineVariant }]} />}
       </View>
 
       <TouchableOpacity
         style={[
           styles.reminderCard,
-          { borderLeftColor: reminderColor },
+          { borderLeftColor: reminderColor, backgroundColor: theme.colors.elevation.level1 },
           item.completed && styles.reminderCardCompleted,
         ]}
         activeOpacity={0.7}
       >
         <View style={styles.reminderHeader}>
           <View style={styles.reminderIconContainer}>
-            <MaterialCommunityIcons
-              name={item.icon}
+            <Icon
+              source={item.icon}
               size={24}
               color={reminderColor}
             />
@@ -49,16 +49,17 @@ const ReminderItemComponent: React.FC<ReminderItemProps> = ({
             <Text
               style={[
                 styles.reminderTitle,
-                item.completed && styles.reminderTitleCompleted,
+                { color: theme.colors.onSurface },
+                item.completed && [styles.reminderTitleCompleted, { color: theme.colors.onSurfaceVariant }],
               ]}
             >
               {item.title}
             </Text>
             {item.subtitle && (
-              <Text style={styles.reminderSubtitle}>{item.subtitle}</Text>
+              <Text style={[styles.reminderSubtitle, { color: theme.colors.onSurfaceVariant }]}>{item.subtitle}</Text>
             )}
             {reminder.notes && (
-              <Text style={styles.reminderNotes} numberOfLines={2}>
+              <Text style={[styles.reminderNotes, { color: theme.colors.onSurfaceVariant }]} numberOfLines={2}>
                 {reminder.notes}
               </Text>
             )}
@@ -66,15 +67,15 @@ const ReminderItemComponent: React.FC<ReminderItemProps> = ({
           <Checkbox
             status={item.completed ? 'checked' : 'unchecked'}
             onPress={() => onToggleComplete(reminder.id)}
-            color={colors.secondary}
+            color={theme.colors.secondary}
           />
         </View>
 
         {reminder.frequency && reminder.frequency !== 'ONCE' && (
           <Chip
             icon="repeat"
-            style={styles.frequencyChip}
-            textStyle={styles.frequencyChipText}
+            style={[styles.frequencyChip, { backgroundColor: theme.colors.primaryContainer }]}
+            textStyle={[styles.frequencyChipText, { color: theme.colors.onPrimaryContainer }]}
             compact
           >
             {reminder.frequency === 'DAILY' && 'Diaria'}
@@ -100,8 +101,7 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xs,
   },
   timeText: {
-    ...typography.caption,
-    color: colors.textSecondary,
+    fontSize: 14,
     marginBottom: spacing.xs,
   },
   timelineDot: {
@@ -113,11 +113,9 @@ const styles = StyleSheet.create({
   timelineLine: {
     flex: 1,
     width: 2,
-    backgroundColor: colors.border,
   },
   reminderCard: {
     flex: 1,
-    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: spacing.md,
     borderLeftWidth: 4,
@@ -142,32 +140,26 @@ const styles = StyleSheet.create({
     marginRight: spacing.sm,
   },
   reminderTitle: {
-    ...typography.body,
+    fontSize: 16,
     fontWeight: '600',
-    color: colors.textPrimary,
     marginBottom: spacing.xs,
   },
   reminderTitleCompleted: {
     textDecorationLine: 'line-through',
-    color: colors.textSecondary,
   },
   reminderSubtitle: {
-    ...typography.caption,
-    color: colors.textSecondary,
+    fontSize: 14,
     marginBottom: spacing.xs,
   },
   reminderNotes: {
-    ...typography.caption,
-    color: colors.textSecondary,
+    fontSize: 14,
     fontStyle: 'italic',
   },
   frequencyChip: {
     alignSelf: 'flex-start',
     marginTop: spacing.sm,
-    backgroundColor: colors.primary + '15',
   },
   frequencyChipText: {
-    ...typography.caption,
-    color: colors.primary,
+    fontSize: 12,
   },
 });

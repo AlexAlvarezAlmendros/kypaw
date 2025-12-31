@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, TouchableOpacity, Platform, StyleSheet } from 'react-native';
-import { TextInput, HelperText } from 'react-native-paper';
+import { TextInput, HelperText, useTheme } from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { formatDate } from '../../utils/dateUtils';
-import { colors } from '../../constants/theme';
 
 interface DatePickerFieldProps {
   label: string;
@@ -24,6 +23,7 @@ export const DatePickerField: React.FC<DatePickerFieldProps> = ({
   error,
   mode = 'date',
 }) => {
+  const theme = useTheme();
   const [show, setShow] = useState(false);
 
   // Cleanup: cerrar el picker al desmontar el componente
@@ -73,7 +73,7 @@ export const DatePickerField: React.FC<DatePickerFieldProps> = ({
             editable={false}
             error={!!error}
             right={<TextInput.Icon icon="calendar" />}
-            style={styles.input}
+            style={[styles.input, { backgroundColor: theme.colors.surface }]}
           />
         </View>
       </TouchableOpacity>
@@ -102,7 +102,5 @@ const styles = StyleSheet.create({
   container: {
     marginBottom: 8,
   },
-  input: {
-    backgroundColor: colors.surface || 'transparent',
-  },
+  input: {},
 });

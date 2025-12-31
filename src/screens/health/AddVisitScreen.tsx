@@ -9,8 +9,7 @@ import {
   Alert,
   Platform,
 } from 'react-native';
-import { TextInput, Button } from 'react-native-paper';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { TextInput, Button, useTheme, Icon } from 'react-native-paper';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useForm, Controller } from 'react-hook-form';
@@ -19,7 +18,7 @@ import { z } from 'zod';
 import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Timestamp } from 'firebase/firestore';
-import { colors, typography, spacing } from '../../constants/theme';
+import { spacing } from '../../constants/theme';
 import { Loading } from '../../components/ui';
 import { useAuthStore } from '../../store/authStore';
 import { createVisit, getVisit, updateVisit } from '../../services/vetVisitService';
@@ -41,6 +40,7 @@ const visitSchema = z.object({
 type VisitFormData = z.infer<typeof visitSchema>;
 
 const AddVisitScreen = () => {
+  const theme = useTheme();
   const route = useRoute<AddVisitRouteProp>();
   const navigation = useNavigation<AddVisitNavigationProp>();
   const { user } = useAuthStore();
@@ -125,7 +125,6 @@ const AddVisitScreen = () => {
       const newDate = new Date(selectedDate);
       newDate.setHours(time.getHours());
       newDate.setMinutes(time.getMinutes());
-      setSelectedDate(newDate);
       setValue('date', newDate);
     }
   };
@@ -256,20 +255,20 @@ const AddVisitScreen = () => {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.sectionTitle}>
+    <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]} contentContainerStyle={styles.content}>
+      <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
         {isEditing ? 'Editar Visita' : 'Información de la Visita'}
       </Text>
 
       {/* Fecha */}
       <View style={styles.inputContainer}>
-        <Text style={styles.label}>Fecha de la visita *</Text>
+        <Text style={[styles.label, { color: theme.colors.onSurface }]}>Fecha de la visita *</Text>
         <TouchableOpacity
-          style={styles.dateButton}
+          style={[styles.dateButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outline }]}
           onPress={() => setShowDatePicker(true)}
         >
-          <MaterialCommunityIcons name="calendar" size={20} color={colors.primary} />
-          <Text style={styles.dateText}>
+          <Icon source="calendar" size={20} color={theme.colors.primary} />
+          <Text style={[styles.dateText, { color: theme.colors.onSurface }]}>
             {selectedDate.toLocaleDateString('es-ES', {
               day: '2-digit',
               month: 'long',
@@ -291,16 +290,16 @@ const AddVisitScreen = () => {
           />
         )}
         {errors.date && (
-          <Text style={styles.errorText}>{errors.date.message}</Text>
+          <Text style={[styles.errorText, { color: theme.colors.error }]}>{errors.date.message}</Text>
         )}
 
         {/* Botón de Hora */}
         <TouchableOpacity
-          style={styles.dateButton}
+          style={[styles.dateButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outline }]}
           onPress={() => setShowTimePicker(true)}
         >
-          <MaterialCommunityIcons name="clock-outline" size={20} color={colors.primary} />
-          <Text style={styles.dateText}>
+          <Icon source="clock-outline" size={20} color={theme.colors.primary} />
+          <Text style={[styles.dateText, { color: theme.colors.onSurface }]}>
             {formatTime(selectedDate)}
           </Text>
         </TouchableOpacity>
@@ -326,15 +325,13 @@ const AddVisitScreen = () => {
             onChangeText={onChange}
             onBlur={onBlur}
             error={!!errors.reason}
-            style={styles.input}
-            outlineColor={colors.border}
-            activeOutlineColor={colors.primary}
+            style={[styles.input, { backgroundColor: theme.colors.surface }]}
             placeholder="ej. Revisión anual, Cojera, Gastroenteritis..."
           />
         )}
       />
       {errors.reason && (
-        <Text style={styles.errorText}>{errors.reason.message}</Text>
+        <Text style={[styles.errorText, { color: theme.colors.error }]}>{errors.reason.message}</Text>
       )}
 
       {/* Clínica */}
@@ -349,15 +346,13 @@ const AddVisitScreen = () => {
             onChangeText={onChange}
             onBlur={onBlur}
             error={!!errors.clinicName}
-            style={styles.input}
-            outlineColor={colors.border}
-            activeOutlineColor={colors.primary}
+            style={[styles.input, { backgroundColor: theme.colors.surface }]}
             placeholder="ej. Clínica San Antón"
           />
         )}
       />
       {errors.clinicName && (
-        <Text style={styles.errorText}>{errors.clinicName.message}</Text>
+        <Text style={[styles.errorText, { color: theme.colors.error }]}>{errors.clinicName.message}</Text>
       )}
 
       {/* Veterinario */}
@@ -371,9 +366,7 @@ const AddVisitScreen = () => {
             value={value}
             onChangeText={onChange}
             onBlur={onBlur}
-            style={styles.input}
-            outlineColor={colors.border}
-            activeOutlineColor={colors.primary}
+            style={[styles.input, { backgroundColor: theme.colors.surface }]}
             placeholder="ej. Dr. García"
           />
         )}
@@ -392,51 +385,49 @@ const AddVisitScreen = () => {
             onBlur={onBlur}
             multiline
             numberOfLines={4}
-            style={[styles.input, styles.textArea]}
-            outlineColor={colors.border}
-            activeOutlineColor={colors.primary}
+            style={[styles.input, styles.textArea, { backgroundColor: theme.colors.surface }]}
             placeholder="Describe el diagnóstico y el tratamiento recetado..."
           />
         )}
       />
 
       {/* Foto de Receta */}
-      <Text style={styles.sectionTitle}>Foto de la Receta</Text>
+      <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>Foto de la Receta</Text>
       <TouchableOpacity
         style={styles.imagePickerButton}
         onPress={handleImageOptions}
       >
         {imageUri ? (
           <View style={styles.imagePreviewContainer}>
-            <Image source={{ uri: imageUri }} style={styles.imagePreview} />
+            <Image source={{ uri: imageUri }} style={[styles.imagePreview, { backgroundColor: theme.colors.outline }]} />
             <TouchableOpacity
-              style={styles.removeImageButton}
+              style={[styles.removeImageButton, { backgroundColor: theme.colors.surface }]}
               onPress={() => setImageUri(null)}
             >
-              <MaterialCommunityIcons name="close-circle" size={28} color={colors.error} />
+              <Icon source="close-circle" size={28} color={theme.colors.error} />
             </TouchableOpacity>
           </View>
         ) : existingImageUrl ? (
           <View style={styles.imagePreviewContainer}>
-            <Image source={{ uri: existingImageUrl }} style={styles.imagePreview} />
+            <Image source={{ uri: existingImageUrl }} style={[styles.imagePreview, { backgroundColor: theme.colors.outline }]} />
             <TouchableOpacity
-              style={styles.changeImageButton}
+              style={[styles.changeImageButton, { backgroundColor: theme.colors.primary }]}
               onPress={handleImageOptions}
             >
-              <MaterialCommunityIcons name="pencil" size={20} color="white" />
+              <Icon source="pencil" size={20} color={theme.colors.onPrimary} />
             </TouchableOpacity>
           </View>
         ) : (
-          <View style={styles.emptyImageContainer}>
-            <MaterialCommunityIcons
-              name="camera-plus"
+          <View style={[styles.emptyImageContainer, { borderColor: theme.colors.outline, backgroundColor: theme.colors.surface }]}>
+            <Icon
+              source="camera-plus"
               size={48}
-              color={colors.textSecondary}
+              color={theme.colors.onSurfaceVariant}
             />
-            <Text style={styles.imagePickerText}>
+            <Text style={[styles.imagePickerText, { color: theme.colors.onSurface }]}>
               Subir foto de la receta
             </Text>
-            <Text style={styles.imagePickerSubtext}>
+            <Text style={[styles.imagePickerSubtext, { color: theme.colors.onSurfaceVariant }]}>
               Opcional
             </Text>
           </View>
@@ -461,15 +452,14 @@ const AddVisitScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   content: {
     padding: spacing.lg,
     paddingBottom: spacing.xl * 2,
   },
   sectionTitle: {
-    ...typography.h3,
-    color: colors.textPrimary,
+    fontSize: 18,
+    fontWeight: '600',
     marginTop: spacing.md,
     marginBottom: spacing.md,
   },
@@ -477,13 +467,12 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   label: {
-    ...typography.button,
-    color: colors.textPrimary,
+    fontSize: 14,
+    fontWeight: '500',
     marginBottom: spacing.xs,
   },
   input: {
     marginBottom: spacing.md,
-    backgroundColor: colors.surface,
   },
   textArea: {
     minHeight: 100,
@@ -491,21 +480,18 @@ const styles = StyleSheet.create({
   dateButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.border,
     borderRadius: 8,
     padding: spacing.md,
+    marginBottom: spacing.sm,
   },
   dateText: {
-    ...typography.body,
-    color: colors.textPrimary,
+    fontSize: 16,
     marginLeft: spacing.sm,
     flex: 1,
   },
   errorText: {
-    ...typography.caption,
-    color: colors.error,
+    fontSize: 12,
     marginTop: spacing.xs,
     marginLeft: spacing.sm,
   },
@@ -516,21 +502,18 @@ const styles = StyleSheet.create({
   },
   emptyImageContainer: {
     borderWidth: 2,
-    borderColor: colors.border,
     borderStyle: 'dashed',
     borderRadius: 12,
     padding: spacing.xl,
     alignItems: 'center',
-    backgroundColor: colors.surface,
   },
   imagePickerText: {
-    ...typography.button,
-    color: colors.textPrimary,
+    fontSize: 14,
+    fontWeight: '500',
     marginTop: spacing.sm,
   },
   imagePickerSubtext: {
-    ...typography.caption,
-    color: colors.textSecondary,
+    fontSize: 12,
     marginTop: spacing.xs,
   },
   imagePreviewContainer: {
@@ -540,34 +523,30 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 250,
     borderRadius: 12,
-    backgroundColor: colors.border,
   },
   removeImageButton: {
     position: 'absolute',
     top: spacing.sm,
     right: spacing.sm,
-    backgroundColor: colors.surface,
     borderRadius: 14,
   },
   changeImageButton: {
     position: 'absolute',
     bottom: spacing.md,
     right: spacing.md,
-    backgroundColor: colors.primary,
     borderRadius: 20,
     padding: spacing.sm,
   },
   submitButton: {
     marginTop: spacing.lg,
-    backgroundColor: colors.primary,
     borderRadius: 12,
   },
   submitButtonContent: {
     paddingVertical: spacing.sm,
   },
   submitButtonLabel: {
-    ...typography.button,
     fontSize: 16,
+    fontWeight: '500',
   },
 });
 

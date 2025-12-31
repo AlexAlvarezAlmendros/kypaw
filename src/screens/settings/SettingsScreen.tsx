@@ -1,15 +1,20 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
-import { List, Divider, Dialog, Portal, Avatar } from 'react-native-paper';
+import { List, Divider, Dialog, Portal, Avatar, RadioButton, useTheme } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '../../components/ui';
-import { colors, typography, spacing } from '../../constants/theme';
+import { spacing } from '../../constants/theme';
 import { useAuth } from '../../hooks/useAuth';
+import { useColorSchemeStore } from '../../hooks/useColorScheme';
 
 const SettingsScreen = () => {
   const { user, logout, loading } = useAuth();
+  const theme = useTheme();
   const insets = useSafeAreaInsets();
   const [logoutDialogVisible, setLogoutDialogVisible] = useState(false);
+  const [themeDialogVisible, setThemeDialogVisible] = useState(false);
+  
+  const { themeMode, setThemeMode } = useColorSchemeStore();
 
   const handleLogout = async () => {
     try {
@@ -20,30 +25,52 @@ const SettingsScreen = () => {
     }
   };
 
+  const handleThemeChange = (mode: 'light' | 'dark' | 'auto') => {
+    setThemeMode(mode);
+    setThemeDialogVisible(false);
+  };
+
+  const getThemeLabel = () => {
+    switch (themeMode) {
+      case 'light':
+        return 'Claro';
+      case 'dark':
+        return 'Oscuro';
+      case 'auto':
+        return 'Automático';
+    }
+  };
+
   const showLogoutDialog = () => setLogoutDialogVisible(true);
   const hideLogoutDialog = () => setLogoutDialogVisible(false);
+  const showThemeDialog = () => setThemeDialogVisible(true);
+  const hideThemeDialog = () => setThemeDialogVisible(false);
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* Header con información del usuario */}
-      <View style={[styles.header, { paddingTop: insets.top + spacing.lg }]}>
+      <View style={[styles.header, { paddingTop: insets.top + spacing.lg, backgroundColor: theme.colors.surface }]}>
         <Avatar.Icon
           size={80}
           icon="account"
-          style={styles.avatar}
-          color={colors.surface}
+          style={[styles.avatar, { backgroundColor: theme.colors.primary }]}
+          color={theme.colors.onPrimary}
         />
-        <Text style={styles.userName}>{user?.displayName || 'Usuario'}</Text>
-        <Text style={styles.userEmail}>{user?.email}</Text>
+        <Text style={[styles.userName, { color: theme.colors.onSurface }]}>
+          {user?.displayName || 'Usuario'}
+        </Text>
+        <Text style={[styles.userEmail, { color: theme.colors.onSurfaceVariant }]}>
+          {user?.email}
+        </Text>
       </View>
 
       {/* Opciones de la cuenta */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Cuenta</Text>
+      <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
+        <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>Cuenta</Text>
         <List.Item
           title="Editar Perfil"
           description="Cambia tu nombre y foto"
-          left={(props) => <List.Icon {...props} icon="account-edit" />}
+          left={(props) => <List.Icon {...props} icon="account-edit" color={theme.colors.primary} />}
           right={(props) => <List.Icon {...props} icon="chevron-right" />}
           onPress={() => {
             // TODO: Navegar a editar perfil
@@ -54,7 +81,7 @@ const SettingsScreen = () => {
         <List.Item
           title="Cambiar Contraseña"
           description="Actualiza tu contraseña"
-          left={(props) => <List.Icon {...props} icon="lock-reset" />}
+          left={(props) => <List.Icon {...props} icon="lock-reset" color={theme.colors.primary} />}
           right={(props) => <List.Icon {...props} icon="chevron-right" />}
           onPress={() => {
             // TODO: Navegar a cambiar contraseña
@@ -64,12 +91,12 @@ const SettingsScreen = () => {
       </View>
 
       {/* Preferencias */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Preferencias</Text>
+      <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
+        <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>Preferencias</Text>
         <List.Item
           title="Notificaciones"
           description="Gestiona tus notificaciones"
-          left={(props) => <List.Icon {...props} icon="bell" />}
+          left={(props) => <List.Icon {...props} icon="bell" color={theme.colors.primary} />}
           right={(props) => <List.Icon {...props} icon="chevron-right" />}
           onPress={() => {
             Alert.alert('Próximamente', 'Función en desarrollo');
@@ -78,22 +105,20 @@ const SettingsScreen = () => {
         <Divider />
         <List.Item
           title="Tema"
-          description="Claro / Oscuro"
-          left={(props) => <List.Icon {...props} icon="theme-light-dark" />}
+          description={getThemeLabel()}
+          left={(props) => <List.Icon {...props} icon="theme-light-dark" color={theme.colors.primary} />}
           right={(props) => <List.Icon {...props} icon="chevron-right" />}
-          onPress={() => {
-            Alert.alert('Próximamente', 'Función en desarrollo');
-          }}
+          onPress={showThemeDialog}
         />
       </View>
 
       {/* Información */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Información</Text>
+      <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
+        <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>Información</Text>
         <List.Item
           title="Acerca de"
           description="Versión 1.0.0"
-          left={(props) => <List.Icon {...props} icon="information" />}
+          left={(props) => <List.Icon {...props} icon="information" color={theme.colors.primary} />}
           right={(props) => <List.Icon {...props} icon="chevron-right" />}
           onPress={() => {
             Alert.alert(
@@ -106,7 +131,7 @@ const SettingsScreen = () => {
         <List.Item
           title="Ayuda y Soporte"
           description="¿Necesitas ayuda?"
-          left={(props) => <List.Icon {...props} icon="help-circle" />}
+          left={(props) => <List.Icon {...props} icon="help-circle" color={theme.colors.primary} />}
           right={(props) => <List.Icon {...props} icon="chevron-right" />}
           onPress={() => {
             Alert.alert('Próximamente', 'Función en desarrollo');
@@ -115,7 +140,7 @@ const SettingsScreen = () => {
         <Divider />
         <List.Item
           title="Políticas de Privacidad"
-          left={(props) => <List.Icon {...props} icon="shield-account" />}
+          left={(props) => <List.Icon {...props} icon="shield-account" color={theme.colors.primary} />}
           right={(props) => <List.Icon {...props} icon="chevron-right" />}
           onPress={() => {
             Alert.alert('Próximamente', 'Función en desarrollo');
@@ -129,19 +154,48 @@ const SettingsScreen = () => {
           mode="outlined"
           onPress={showLogoutDialog}
           icon="logout"
-          style={styles.logoutButton}
+          style={[styles.logoutButton, { borderColor: theme.colors.error }]}
+          textColor={theme.colors.error}
         >
           Cerrar Sesión
         </Button>
       </View>
 
-      {/* Dialog de confirmación */}
+      {/* Dialog de selección de tema */}
+      <Portal>
+        <Dialog visible={themeDialogVisible} onDismiss={hideThemeDialog}>
+          <Dialog.Title>Selecciona un tema</Dialog.Title>
+          <Dialog.Content>
+            <RadioButton.Group onValueChange={handleThemeChange as any} value={themeMode}>
+              <View style={styles.radioItem}>
+                <RadioButton.Item label="Claro" value="light" />
+              </View>
+              <View style={styles.radioItem}>
+                <RadioButton.Item label="Oscuro" value="dark" />
+              </View>
+              <View style={styles.radioItem}>
+                <RadioButton.Item 
+                  label="Automático (según el sistema)" 
+                  value="auto" 
+                />
+              </View>
+            </RadioButton.Group>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button mode="text" onPress={hideThemeDialog}>
+              Cerrar
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+
+      {/* Dialog de confirmación de logout */}
       <Portal>
         <Dialog visible={logoutDialogVisible} onDismiss={hideLogoutDialog}>
           <Dialog.Icon icon="logout" />
           <Dialog.Title style={styles.dialogTitle}>Cerrar Sesión</Dialog.Title>
           <Dialog.Content>
-            <Text style={styles.dialogText}>
+            <Text style={[styles.dialogText, { color: theme.colors.onSurfaceVariant }]}>
               ¿Estás seguro que deseas cerrar sesión?
             </Text>
           </Dialog.Content>
@@ -162,36 +216,32 @@ const SettingsScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   header: {
     alignItems: 'center',
     paddingHorizontal: spacing.xl,
     paddingBottom: spacing.xl,
-    backgroundColor: colors.surface,
     marginBottom: spacing.md,
   },
   avatar: {
-    backgroundColor: colors.primary,
     marginBottom: spacing.md,
   },
   userName: {
-    ...typography.h2,
-    color: colors.textPrimary,
+    fontSize: 24,
+    fontWeight: '700',
     marginBottom: spacing.xs,
   },
   userEmail: {
-    ...typography.body,
-    color: colors.textSecondary,
+    fontSize: 16,
+    fontWeight: '400',
   },
   section: {
-    backgroundColor: colors.surface,
     marginBottom: spacing.md,
     paddingVertical: spacing.sm,
   },
   sectionTitle: {
-    ...typography.h3,
-    color: colors.textPrimary,
+    fontSize: 20,
+    fontWeight: '600',
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
   },
@@ -200,15 +250,18 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
   },
   logoutButton: {
-    borderColor: colors.error,
+    // El color del borde se aplica dinámicamente
   },
   dialogTitle: {
     textAlign: 'center',
   },
   dialogText: {
-    ...typography.body,
-    color: colors.textSecondary,
+    fontSize: 16,
+    fontWeight: '400',
     textAlign: 'center',
+  },
+  radioItem: {
+    marginVertical: -8,
   },
 });
 

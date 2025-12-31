@@ -2,15 +2,38 @@
 
 Una aplicación móvil para la gestión integral de tus mascotas: historial médico, recordatorios, vacunas y más.
 
+## ✨ Características Principales
+
+- 📱 **Diseño Material Design 3** - Interfaz moderna y accesible
+- 🌓 **Modo Oscuro** - Soporte completo para tema claro y oscuro
+- 🐾 **Multi-Mascota** - Gestiona varios animales desde una cuenta
+- 🏥 **Historial Médico Digital** - Registra visitas y diagnósticos
+- 📸 **Digitalización de Recetas** - Captura y almacena documentos
+- 💉 **Control de Vacunas** - Calendario completo de vacunación
+- ⏰ **Recordatorios Inteligentes** - Alertas para medicación y citas
+- 🔒 **Seguro y Privado** - Datos protegidos con Firebase
+
 ## 🚀 Stack Tecnológico
 
 - **Framework:** React Native (Expo SDK 50+)
 - **Lenguaje:** TypeScript
 - **Backend:** Firebase (Auth, Firestore, Storage)
 - **Navegación:** React Navigation v6
-- **UI Library:** React Native Paper
+- **UI Library:** React Native Paper 5.x (Material Design 3)
 - **Gestión de Estado:** Zustand
 - **Validación:** Zod + React Hook Form
+
+## 🎨 Sistema de Diseño
+
+Esta aplicación implementa **Material Design 3** (MD3) de Google, proporcionando:
+
+- Sistema de colores dinámico con 30+ tokens
+- 15 escalas tipográficas completas
+- Modo claro y oscuro
+- Componentes accesibles (WCAG AA)
+
+📚 **Ver guía completa:** [MATERIAL_DESIGN_3.md](./MATERIAL_DESIGN_3.md)  
+📖 **Migración:** [MATERIAL_DESIGN_3_MIGRATION.md](./MATERIAL_DESIGN_3_MIGRATION.md)
 
 ## 📁 Estructura del Proyecto
 

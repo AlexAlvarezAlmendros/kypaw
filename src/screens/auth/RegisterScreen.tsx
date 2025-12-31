@@ -8,13 +8,13 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
-import { TextInput } from 'react-native-paper';
+import { TextInput, useTheme } from 'react-native-paper';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 import { Button, Input } from '../../components/ui';
-import { colors, typography, spacing } from '../../constants/theme';
+import { spacing } from '../../constants/theme';
 import { registerSchema } from '../../utils/validation';
 import { getErrorMessage } from '../../utils/firebaseErrors';
 import { useAuth } from '../../hooks/useAuth';
@@ -32,6 +32,7 @@ interface RegisterFormData {
 }
 
 const RegisterScreen = () => {
+  const theme = useTheme();
   const navigation = useNavigation<RegisterScreenNavigationProp>();
   const { register, loading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
@@ -62,7 +63,7 @@ const RegisterScreen = () => {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView
@@ -70,8 +71,8 @@ const RegisterScreen = () => {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
-          <Text style={styles.title}>Crear Cuenta 🐾</Text>
-          <Text style={styles.subtitle}>
+          <Text style={[styles.title, { color: theme.colors.onSurface }]}>Crear Cuenta 🐾</Text>
+          <Text style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>
             Regístrate para comenzar a gestionar a tus mascotas
           </Text>
         </View>
@@ -141,8 +142,8 @@ const RegisterScreen = () => {
           />
 
           {errorMessage && (
-            <View style={styles.errorContainer}>
-              <Text style={styles.errorText}>{errorMessage}</Text>
+            <View style={[styles.errorContainer, { backgroundColor: theme.colors.errorContainer }]}>
+              <Text style={[styles.errorText, { color: theme.colors.error }]}>{errorMessage}</Text>
             </View>
           )}
 
@@ -156,9 +157,9 @@ const RegisterScreen = () => {
           </Button>
 
           <View style={styles.loginContainer}>
-            <Text style={styles.loginText}>¿Ya tienes cuenta? </Text>
+            <Text style={[styles.loginText, { color: theme.colors.onSurfaceVariant }]}>¿Ya tienes cuenta? </Text>
             <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-              <Text style={styles.loginLink}>Inicia Sesión</Text>
+              <Text style={[styles.loginLink, { color: theme.colors.primary }]}>Inicia Sesión</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -170,7 +171,6 @@ const RegisterScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   scrollContent: {
     flexGrow: 1,
@@ -181,13 +181,12 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
   },
   title: {
-    ...typography.h1,
-    color: colors.textPrimary,
+    fontSize: 28,
+    fontWeight: 'bold',
     marginBottom: spacing.sm,
   },
   subtitle: {
-    ...typography.body,
-    color: colors.textSecondary,
+    fontSize: 16,
   },
   form: {
     marginTop: spacing.md,
@@ -196,14 +195,12 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
   },
   errorContainer: {
-    backgroundColor: colors.error + '20',
     padding: spacing.md,
     borderRadius: 8,
     marginVertical: spacing.sm,
   },
   errorText: {
-    color: colors.error,
-    ...typography.body,
+    fontSize: 16,
     textAlign: 'center',
   },
   loginContainer: {
@@ -212,12 +209,10 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
   },
   loginText: {
-    ...typography.body,
-    color: colors.textSecondary,
+    fontSize: 16,
   },
   loginLink: {
-    ...typography.body,
-    color: colors.primary,
+    fontSize: 16,
     fontWeight: '600',
   },
 });

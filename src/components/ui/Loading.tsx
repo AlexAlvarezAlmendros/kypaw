@@ -1,7 +1,6 @@
 import React from 'react';
-import { ActivityIndicator } from 'react-native-paper';
+import { ActivityIndicator, useTheme } from 'react-native-paper';
 import { View, StyleSheet } from 'react-native';
-import { colors } from '../../constants/theme';
 
 interface LoadingProps {
   size?: 'small' | 'large' | number;
@@ -9,15 +8,17 @@ interface LoadingProps {
 }
 
 const Loading: React.FC<LoadingProps> = ({ size = 'large', fullScreen = false }) => {
+  const theme = useTheme();
+  
   if (fullScreen) {
     return (
-      <View style={styles.fullScreen}>
-        <ActivityIndicator size={size} color={colors.primary} />
+      <View style={[styles.fullScreen, { backgroundColor: theme.colors.background }]}>
+        <ActivityIndicator size={size} color={theme.colors.primary} />
       </View>
     );
   }
 
-  return <ActivityIndicator size={size} color={colors.primary} />;
+  return <ActivityIndicator size={size} color={theme.colors.primary} />;
 };
 
 const styles = StyleSheet.create({
@@ -25,7 +26,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.background,
   },
 });
 

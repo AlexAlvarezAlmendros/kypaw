@@ -7,11 +7,16 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { onAuthStateChanged, type Auth } from 'firebase/auth';
 import { auth } from './src/config/firebase';
 import { useAuthStore } from './src/store/authStore';
-import { paperTheme } from './src/config/paperTheme';
+import { lightTheme, darkTheme } from './src/config/paperTheme';
+import { useAppColorScheme } from './src/hooks/useColorScheme';
 import AppNavigator from './src/navigation/AppNavigator';
 
 export default function App() {
   const { setUser, setLoading } = useAuthStore();
+  const colorScheme = useAppColorScheme();
+  
+  // Seleccionar tema según el esquema de color
+  const theme = colorScheme === 'dark' ? darkTheme : lightTheme;
 
   useEffect(() => {
     // Listener de autenticación de Firebase
@@ -35,8 +40,8 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <PaperProvider theme={paperTheme}>
-        <StatusBar style="auto" />
+      <PaperProvider theme={theme}>
+        <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
         <AppNavigator />
       </PaperProvider>
     </SafeAreaProvider>

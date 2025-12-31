@@ -1,8 +1,7 @@
 import React, { memo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Chip } from 'react-native-paper';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { colors, typography, spacing } from '../../constants/theme';
+import { Chip, Icon, useTheme } from 'react-native-paper';
+import { spacing } from '../../constants/theme';
 import { VetVisit } from '../../types';
 import { TodayItem } from '../../hooks/useTodayItems';
 
@@ -19,29 +18,30 @@ const VisitItemComponent: React.FC<VisitItemProps> = ({
   onPress,
   showConnectorLine,
 }) => {
+  const theme = useTheme();
   const visit = item.data as VetVisit;
 
   return (
     <View style={styles.timelineItem}>
       <View style={styles.timelineLeft}>
-        <Text style={styles.timeText}>{item.time}</Text>
+        <Text style={[styles.timeText, { color: theme.colors.onSurfaceVariant }]}>{item.time}</Text>
         <View style={[styles.timelineDot, { backgroundColor: visitColor }]} />
-        {showConnectorLine && <View style={styles.timelineLine} />}
+        {showConnectorLine && <View style={[styles.timelineLine, { backgroundColor: theme.colors.outlineVariant }]} />}
       </View>
 
       <TouchableOpacity
-        style={[styles.reminderCard, { borderLeftColor: visitColor }]}
+        style={[styles.reminderCard, { borderLeftColor: visitColor, backgroundColor: theme.colors.elevation.level1 }]}
         onPress={() => onPress(visit.petId)}
         activeOpacity={0.7}
       >
         <View style={styles.reminderHeader}>
           <View style={styles.reminderIconContainer}>
-            <MaterialCommunityIcons name={item.icon} size={24} color={visitColor} />
+            <Icon source={item.icon} size={24} color={visitColor} />
           </View>
           <View style={styles.reminderContent}>
-            <Text style={styles.reminderTitle}>{item.title}</Text>
+            <Text style={[styles.reminderTitle, { color: theme.colors.onSurface }]}>{item.title}</Text>
             {item.subtitle && (
-              <Text style={styles.reminderSubtitle}>{item.subtitle}</Text>
+              <Text style={[styles.reminderSubtitle, { color: theme.colors.onSurfaceVariant }]}>{item.subtitle}</Text>
             )}
           </View>
         </View>
@@ -49,8 +49,8 @@ const VisitItemComponent: React.FC<VisitItemProps> = ({
         {visit.clinicName && (
           <Chip
             icon="hospital-building"
-            style={styles.frequencyChip}
-            textStyle={styles.frequencyChipText}
+            style={[styles.frequencyChip, { backgroundColor: theme.colors.primaryContainer }]}
+            textStyle={[styles.frequencyChipText, { color: theme.colors.onPrimaryContainer }]}
             compact
           >
             {visit.clinicName}
@@ -74,8 +74,7 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xs,
   },
   timeText: {
-    ...typography.caption,
-    color: colors.textSecondary,
+    fontSize: 14,
     marginBottom: spacing.xs,
   },
   timelineDot: {
@@ -87,11 +86,9 @@ const styles = StyleSheet.create({
   timelineLine: {
     flex: 1,
     width: 2,
-    backgroundColor: colors.border,
   },
   reminderCard: {
     flex: 1,
-    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: spacing.md,
     borderLeftWidth: 4,
@@ -113,23 +110,19 @@ const styles = StyleSheet.create({
     marginRight: spacing.sm,
   },
   reminderTitle: {
-    ...typography.body,
+    fontSize: 16,
     fontWeight: '600',
-    color: colors.textPrimary,
     marginBottom: spacing.xs,
   },
   reminderSubtitle: {
-    ...typography.caption,
-    color: colors.textSecondary,
+    fontSize: 14,
     marginBottom: spacing.xs,
   },
   frequencyChip: {
     alignSelf: 'flex-start',
     marginTop: spacing.sm,
-    backgroundColor: colors.primary + '15',
   },
   frequencyChipText: {
-    ...typography.caption,
-    color: colors.primary,
+    fontSize: 12,
   },
 });
