@@ -13,6 +13,8 @@ export const REMINDER_TYPES = {
 export const REMINDER_FREQUENCIES = {
   ONCE: 'Una vez',
   DAILY: 'Diario',
+  EVERY_TWO_DAYS: 'Cada 2 días',
+  EVERY_THREE_DAYS: 'Cada 3 días',
   WEEKLY: 'Semanal',
   MONTHLY: 'Mensual',
 } as const;

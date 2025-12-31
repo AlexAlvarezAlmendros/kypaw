@@ -9,6 +9,7 @@ import { auth } from './src/config/firebase';
 import { useAuthStore } from './src/store/authStore';
 import { lightTheme, darkTheme } from './src/config/paperTheme';
 import { useAppColorScheme } from './src/hooks/useColorScheme';
+import { initializeNotificationListeners, cleanupNotificationListeners } from './src/services/notificationService';
 import AppNavigator from './src/navigation/AppNavigator';
 
 export default function App() {
@@ -36,6 +37,15 @@ export default function App() {
     });
 
     return unsubscribe;
+  }, []);
+
+  // Inicializar listeners de notificaciones para reprogramación automática
+  useEffect(() => {
+    initializeNotificationListeners();
+    
+    return () => {
+      cleanupNotificationListeners();
+    };
   }, []);
 
   return (

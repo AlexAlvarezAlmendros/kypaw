@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { Alert } from 'react-native';
-import { getTodayReminders, updateReminder } from '../services/reminderService';
+import { getUserReminders, updateReminder } from '../services/reminderService';
 import { getUserVisits } from '../services/vetVisitService';
 import { getUserPets } from '../services/petService';
 import { Reminder, VetVisit, Pet } from '../types';
@@ -26,6 +26,77 @@ interface UseTodayItemsResult {
   toggleReminderComplete: (reminderId: string) => Promise<void>;
 }
 
+const formatDateKey = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+/**
+ * Verifica si un recordatorio aplica para la fecha de hoy basándose en su frecuencia
+ */
+const reminderAppliesToday = (reminder: Reminder): boolean => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayKey = formatDateKey(today);
+  
+  const originalDate = reminder.scheduledAt.toDate();
+  const originalDateNormalized = new Date(originalDate);
+  originalDateNormalized.setHours(0, 0, 0, 0);
+  const originalKey = formatDateKey(originalDate);
+  
+  // Si es la fecha original, siempre aplica
+  if (originalKey === todayKey) {
+    return true;
+  }
+  
+  // Si no tiene frecuencia o es única, solo aplica en la fecha original
+  if (!reminder.frequency || reminder.frequency === 'ONCE') {
+    return false;
+  }
+  
+  // Si la fecha original es en el futuro, no aplica hoy
+  if (originalDateNormalized > today) {
+    return false;
+  }
+  
+  // Calcular diferencia en días de forma precisa (usando fechas UTC para evitar problemas de zona horaria)
+  const todayUTC = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
+  const originalUTC = Date.UTC(originalDateNormalized.getFullYear(), originalDateNormalized.getMonth(), originalDateNormalized.getDate());
+  const diffDays = Math.round((todayUTC - originalUTC) / (1000 * 60 * 60 * 24));
+  
+  switch (reminder.frequency) {
+    case 'DAILY':
+      return true; // Todos los días después de la fecha original
+    case 'EVERY_TWO_DAYS':
+      return diffDays % 2 === 0; // Cada 2 días (día 0, 2, 4, 6...)
+    case 'EVERY_THREE_DAYS':
+      return diffDays % 3 === 0; // Cada 3 días (día 0, 3, 6, 9...)
+    case 'WEEKLY':
+      return diffDays % 7 === 0; // Cada 7 días
+    case 'MONTHLY':
+      // Verificar si es el mismo día del mes
+      return originalDate.getDate() === today.getDate();
+    default:
+      return false;
+  }
+};
+
+/**
+ * Verifica si un recordatorio recurrente está completado para una fecha específica
+ */
+const isCompletedForDate = (reminder: Reminder, date: Date): boolean => {
+  // Para recordatorios únicos, usar el campo completed
+  if (!reminder.frequency || reminder.frequency === 'ONCE') {
+    return reminder.completed || false;
+  }
+  
+  // Para recordatorios recurrentes, verificar en completedDates
+  const dateKey = formatDateKey(date);
+  return reminder.completedDates?.includes(dateKey) || false;
+};
+
 export const useTodayItems = (userId: string | undefined): UseTodayItemsResult => {
   const [items, setItems] = useState<TodayItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,8 +114,8 @@ export const useTodayItems = (userId: string | undefined): UseTodayItemsResult =
         setLoading(true);
       }
 
-      const [todayReminders, allVisits, pets] = await Promise.all([
-        getTodayReminders(userId),
+      const [allReminders, allVisits, pets] = await Promise.all([
+        getUserReminders(userId),
         getUserVisits(userId),
         getUserPets(userId),
       ]);
@@ -61,16 +132,27 @@ export const useTodayItems = (userId: string | undefined): UseTodayItemsResult =
         return visitDate >= todayDate && visitDate < tomorrowDate;
       });
 
+      // Filtrar recordatorios que aplican para hoy (incluyendo recurrentes)
+      const todayReminders = allReminders.filter(reminderAppliesToday);
+
       const reminderItems: TodayItem[] = todayReminders.map((reminder) => {
         const pet = reminder.petId ? petsMap.get(reminder.petId) : null;
+        // Para la vista de agenda, usar la hora original pero del día de hoy
+        const originalDate = reminder.scheduledAt.toDate();
+        const todayWithOriginalTime = new Date();
+        todayWithOriginalTime.setHours(originalDate.getHours(), originalDate.getMinutes(), 0, 0);
+        
+        // Verificar si está completado para hoy
+        const isCompleted = isCompletedForDate(reminder, todayDate);
+        
         return {
           id: reminder.id,
           type: 'reminder' as const,
-          time: formatTime(reminder.scheduledAt.toDate()),
+          time: formatTime(todayWithOriginalTime),
           title: reminder.title,
           subtitle: pet?.name,
           icon: getReminderIcon(reminder.type),
-          completed: reminder.completed,
+          completed: isCompleted,
           data: reminder,
         };
       });
@@ -117,27 +199,71 @@ export const useTodayItems = (userId: string | undefined): UseTodayItemsResult =
     if (!item || item.type !== 'reminder') return;
 
     const reminder = item.data as Reminder;
-    const newCompleted = !reminder.completed;
+    const isRecurring = reminder.frequency && reminder.frequency !== 'ONCE';
+    const currentlyCompleted = item.completed;
+    const newCompleted = !currentlyCompleted;
+    
+    // Obtener la fecha de hoy
+    const today = new Date();
+    const dateKey = formatDateKey(today);
 
-    setItems(prevItems =>
-      prevItems.map(i =>
-        i.id === reminderId
-          ? { ...i, completed: newCompleted, data: { ...i.data, completed: newCompleted } }
-          : i
-      )
-    );
+    if (isRecurring) {
+      // Para recordatorios recurrentes, actualizar completedDates
+      const currentCompletedDates = reminder.completedDates || [];
+      let newCompletedDates: string[];
+      
+      if (newCompleted) {
+        // Añadir la fecha si no existe
+        newCompletedDates = [...currentCompletedDates, dateKey];
+      } else {
+        // Quitar la fecha
+        newCompletedDates = currentCompletedDates.filter(d => d !== dateKey);
+      }
 
-    try {
-      await updateReminder(userId!, reminderId, { completed: newCompleted });
-    } catch (error) {
+      // Actualizar la UI
       setItems(prevItems =>
         prevItems.map(i =>
           i.id === reminderId
-            ? { ...i, completed: !newCompleted, data: { ...i.data, completed: !newCompleted } }
+            ? { ...i, completed: newCompleted, data: { ...i.data, completedDates: newCompletedDates } }
             : i
         )
       );
-      Alert.alert('Error', 'No se pudo actualizar el recordatorio');
+
+      try {
+        await updateReminder(userId!, reminderId, { completedDates: newCompletedDates });
+      } catch (error) {
+        // Revertir en caso de error
+        setItems(prevItems =>
+          prevItems.map(i =>
+            i.id === reminderId
+              ? { ...i, completed: currentlyCompleted, data: { ...i.data, completedDates: currentCompletedDates } }
+              : i
+          )
+        );
+        Alert.alert('Error', 'No se pudo actualizar el recordatorio');
+      }
+    } else {
+      // Para recordatorios únicos, usar el campo completed
+      setItems(prevItems =>
+        prevItems.map(i =>
+          i.id === reminderId
+            ? { ...i, completed: newCompleted, data: { ...i.data, completed: newCompleted } }
+            : i
+        )
+      );
+
+      try {
+        await updateReminder(userId!, reminderId, { completed: newCompleted });
+      } catch (error) {
+        setItems(prevItems =>
+          prevItems.map(i =>
+            i.id === reminderId
+              ? { ...i, completed: !newCompleted, data: { ...i.data, completed: !newCompleted } }
+              : i
+          )
+        );
+        Alert.alert('Error', 'No se pudo actualizar el recordatorio');
+      }
     }
   };
 

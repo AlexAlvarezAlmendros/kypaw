@@ -1,6 +1,6 @@
-import React, { memo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Checkbox, Chip, Icon, useTheme } from 'react-native-paper';
+import React, { memo, useState, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, GestureResponderEvent, Pressable } from 'react-native';
+import { Checkbox, Chip, Icon, useTheme, Menu, IconButton } from 'react-native-paper';
 import { spacing } from '../../constants/theme';
 import { Reminder } from '../../types';
 import { TodayItem } from '../../hooks/useTodayItems';
@@ -9,6 +9,8 @@ interface ReminderItemProps {
   item: TodayItem;
   reminderColor: string;
   onToggleComplete: (reminderId: string) => void;
+  onEdit?: (reminderId: string) => void;
+  onDelete?: (reminderId: string) => void;
   showConnectorLine: boolean;
 }
 
@@ -16,10 +18,48 @@ const ReminderItemComponent: React.FC<ReminderItemProps> = ({
   item,
   reminderColor,
   onToggleComplete,
+  onEdit,
+  onDelete,
   showConnectorLine,
 }) => {
   const theme = useTheme();
   const reminder = item.data as Reminder;
+  const [menuVisible, setMenuVisible] = useState(false);
+  const [menuAnchor, setMenuAnchor] = useState({ x: 0, y: 0 });
+  const cardRef = useRef<View>(null);
+
+  const handlePress = () => {
+    if (onEdit) {
+      onEdit(reminder.id);
+    }
+  };
+
+  const handleLongPress = (event: GestureResponderEvent) => {
+    const { pageX, pageY } = event.nativeEvent;
+    setMenuAnchor({ x: pageX, y: pageY });
+    setMenuVisible(true);
+  };
+
+  const handleDelete = () => {
+    setMenuVisible(false);
+    Alert.alert(
+      'Eliminar recordatorio',
+      `¿Estás seguro de que quieres eliminar "${item.title}"?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar',
+          style: 'destructive',
+          onPress: () => onDelete?.(reminder.id),
+        },
+      ]
+    );
+  };
+
+  const handleEdit = () => {
+    setMenuVisible(false);
+    onEdit?.(reminder.id);
+  };
 
   return (
     <View style={styles.timelineItem}>
@@ -29,61 +69,90 @@ const ReminderItemComponent: React.FC<ReminderItemProps> = ({
         {showConnectorLine && <View style={[styles.timelineLine, { backgroundColor: theme.colors.outlineVariant }]} />}
       </View>
 
-      <TouchableOpacity
-        style={[
-          styles.reminderCard,
-          { borderLeftColor: reminderColor, backgroundColor: theme.colors.elevation.level1 },
-          item.completed && styles.reminderCardCompleted,
-        ]}
-        activeOpacity={0.7}
-      >
-        <View style={styles.reminderHeader}>
-          <View style={styles.reminderIconContainer}>
-            <Icon
-              source={item.icon}
-              size={24}
-              color={reminderColor}
-            />
-          </View>
-          <View style={styles.reminderContent}>
-            <Text
-              style={[
-                styles.reminderTitle,
-                { color: theme.colors.onSurface },
-                item.completed && [styles.reminderTitleCompleted, { color: theme.colors.onSurfaceVariant }],
-              ]}
-            >
-              {item.title}
-            </Text>
-            {item.subtitle && (
-              <Text style={[styles.reminderSubtitle, { color: theme.colors.onSurfaceVariant }]}>{item.subtitle}</Text>
-            )}
-            {reminder.notes && (
-              <Text style={[styles.reminderNotes, { color: theme.colors.onSurfaceVariant }]} numberOfLines={2}>
-                {reminder.notes}
-              </Text>
-            )}
-          </View>
-          <Checkbox
-            status={item.completed ? 'checked' : 'unchecked'}
-            onPress={() => onToggleComplete(reminder.id)}
-            color={theme.colors.secondary}
+      <View style={styles.cardContainer}>
+        <Menu
+          visible={menuVisible}
+          onDismiss={() => setMenuVisible(false)}
+          anchor={menuAnchor}
+        >
+          <Menu.Item
+            onPress={handleEdit}
+            title="Editar"
+            leadingIcon="pencil"
           />
-        </View>
+          <Menu.Item
+            onPress={handleDelete}
+            title="Eliminar"
+            leadingIcon="delete"
+            titleStyle={{ color: theme.colors.error }}
+          />
+        </Menu>
 
-        {reminder.frequency && reminder.frequency !== 'ONCE' && (
-          <Chip
-            icon="repeat"
-            style={[styles.frequencyChip, { backgroundColor: theme.colors.primaryContainer }]}
-            textStyle={[styles.frequencyChipText, { color: theme.colors.onPrimaryContainer }]}
-            compact
-          >
-            {reminder.frequency === 'DAILY' && 'Diaria'}
-            {reminder.frequency === 'WEEKLY' && 'Semanal'}
-            {reminder.frequency === 'MONTHLY' && 'Mensual'}
-          </Chip>
-        )}
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.reminderCard,
+            { borderLeftColor: reminderColor, backgroundColor: theme.colors.elevation.level1 },
+            item.completed && styles.reminderCardCompleted,
+          ]}
+          activeOpacity={0.7}
+          onPress={handlePress}
+          onLongPress={handleLongPress}
+        >
+          <View style={styles.reminderHeader}>
+            <View style={styles.reminderIconContainer}>
+              <Icon
+                source={item.icon}
+                size={24}
+                color={reminderColor}
+              />
+            </View>
+            <View style={styles.reminderContent}>
+              <Text
+                style={[
+                  styles.reminderTitle,
+                  { color: theme.colors.onSurface },
+                  item.completed && [styles.reminderTitleCompleted, { color: theme.colors.onSurfaceVariant }],
+                ]}
+              >
+                {item.title}
+              </Text>
+              {item.subtitle && (
+                <Text style={[styles.reminderSubtitle, { color: theme.colors.onSurfaceVariant }]}>{item.subtitle}</Text>
+              )}
+              {reminder.notes && (
+                <Text style={[styles.reminderNotes, { color: theme.colors.onSurfaceVariant }]} numberOfLines={2}>
+                  {reminder.notes}
+                </Text>
+              )}
+            </View>
+            <Pressable
+              onPress={() => onToggleComplete(item.id)}
+              hitSlop={8}
+            >
+              <Checkbox
+                status={item.completed ? 'checked' : 'unchecked'}
+                onPress={() => onToggleComplete(item.id)}
+                color={theme.colors.secondary}
+              />
+            </Pressable>
+          </View>
+
+          {reminder.frequency && reminder.frequency !== 'ONCE' && (
+            <Chip
+              icon="repeat"
+              style={[styles.frequencyChip, { backgroundColor: theme.colors.primaryContainer }]}
+              textStyle={[styles.frequencyChipText, { color: theme.colors.onPrimaryContainer }]}
+              compact
+            >
+              {reminder.frequency === 'DAILY' && 'Diaria'}
+              {reminder.frequency === 'EVERY_TWO_DAYS' && 'Cada 2 días'}
+              {reminder.frequency === 'EVERY_THREE_DAYS' && 'Cada 3 días'}
+              {reminder.frequency === 'WEEKLY' && 'Semanal'}
+              {reminder.frequency === 'MONTHLY' && 'Mensual'}
+            </Chip>
+          )}
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -114,8 +183,10 @@ const styles = StyleSheet.create({
     flex: 1,
     width: 2,
   },
-  reminderCard: {
+  cardContainer: {
     flex: 1,
+  },
+  reminderCard: {
     borderRadius: 12,
     padding: spacing.md,
     borderLeftWidth: 4,

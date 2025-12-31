@@ -5,10 +5,14 @@
  * - Solicitar permisos
  * - Programar notificaciones
  * - Cancelar notificaciones
+ * - Reprogramación automática para frecuencias cada 2/3 días
  */
 
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
+
+// Subscription para el listener de notificaciones recibidas
+let notificationReceivedSubscription: Notifications.Subscription | null = null;
 
 /**
  * Configurar el comportamiento de las notificaciones
@@ -88,11 +92,12 @@ export const scheduleNotification = async (
 
 /**
  * Programar notificación recurrente
+ * Para frecuencias no soportadas nativamente (cada 2/3 días), programamos solo la próxima notificación
  */
 export const scheduleRecurringNotification = async (
   title: string,
   body: string,
-  frequency: 'DAILY' | 'WEEKLY' | 'MONTHLY',
+  frequency: 'DAILY' | 'EVERY_TWO_DAYS' | 'EVERY_THREE_DAYS' | 'WEEKLY' | 'MONTHLY',
   hour: number,
   minute: number,
   data?: any
@@ -109,10 +114,39 @@ export const scheduleRecurringNotification = async (
           repeats: true,
         };
         break;
+      case 'EVERY_TWO_DAYS':
+      case 'EVERY_THREE_DAYS':
+        // Expo Notifications no soporta nativamente cada 2 o 3 días
+        // Programamos solo la PRÓXIMA notificación
+        const intervalDays = frequency === 'EVERY_TWO_DAYS' ? 2 : 3;
+        const now = new Date();
+        const scheduledDate = new Date(now);
+        scheduledDate.setHours(hour, minute, 0, 0);
+        
+        // Si la hora de hoy ya pasó, programar para el próximo intervalo
+        if (scheduledDate <= now) {
+          scheduledDate.setDate(scheduledDate.getDate() + intervalDays);
+        }
+        
+        const notificationId = await Notifications.scheduleNotificationAsync({
+          content: {
+            title,
+            body,
+            data: { ...data, frequency, intervalDays },
+            sound: true,
+          },
+          trigger: {
+            channelId: 'default',
+            date: scheduledDate,
+          },
+        });
+        
+        return notificationId;
+        
       case 'WEEKLY':
         trigger = {
           channelId: 'default',
-          weekday: 1, // Lunes (1 = Monday)
+          weekday: new Date().getDay() || 7, // Usar el día actual de la semana
           hour,
           minute,
           repeats: true,
@@ -121,7 +155,7 @@ export const scheduleRecurringNotification = async (
       case 'MONTHLY':
         trigger = {
           channelId: 'default',
-          day: 1, // Día 1 del mes
+          day: new Date().getDate(), // Usar el día actual del mes
           hour,
           minute,
           repeats: true,
@@ -131,7 +165,8 @@ export const scheduleRecurringNotification = async (
         throw new Error('Frecuencia no válida');
     }
 
-    const notificationId = await Notifications.scheduleNotificationAsync({
+    // Para DAILY, WEEKLY, MONTHLY usar el trigger nativo con repetición
+    const recurringNotificationId = await Notifications.scheduleNotificationAsync({
       content: {
         title,
         body,
@@ -141,7 +176,7 @@ export const scheduleRecurringNotification = async (
       trigger,
     });
 
-    return notificationId;
+    return recurringNotificationId;
   } catch (error: any) {
 
     throw new Error(`Error al programar notificación recurrente: ${error.message}`);
@@ -207,5 +242,94 @@ export const sendImmediateNotification = async (
   } catch (error: any) {
 
     throw new Error(`Error al enviar notificación inmediata: ${error.message}`);
+  }
+};
+
+/**
+ * Reprogramar la próxima notificación para frecuencias cada 2/3 días
+ * Esta función se llama automáticamente cuando se recibe una notificación
+ */
+const rescheduleIntervalNotification = async (notification: Notifications.Notification) => {
+  try {
+    const data = notification.request.content.data;
+    
+    // Verificar si es una notificación con frecuencia cada 2 o 3 días
+    if (!data?.frequency || !data?.intervalDays) return;
+    
+    const frequency = data.frequency as string;
+    if (frequency !== 'EVERY_TWO_DAYS' && frequency !== 'EVERY_THREE_DAYS') return;
+    
+    const intervalDays = data.intervalDays as number;
+    const title = notification.request.content.title || 'Recordatorio';
+    const body = notification.request.content.body || '';
+    
+    // Calcular la próxima fecha
+    const now = new Date();
+    const nextDate = new Date(now);
+    nextDate.setDate(nextDate.getDate() + intervalDays);
+    
+    // Mantener la misma hora que la notificación original
+    // Intentar obtener la hora del trigger original o usar la hora actual
+    const originalTrigger = notification.request.trigger;
+    let hour = now.getHours();
+    let minute = now.getMinutes();
+    
+    if (originalTrigger && 'date' in originalTrigger && originalTrigger.date) {
+      const triggerDate = new Date(originalTrigger.date);
+      hour = triggerDate.getHours();
+      minute = triggerDate.getMinutes();
+    }
+    
+    nextDate.setHours(hour, minute, 0, 0);
+    
+    // Programar la próxima notificación
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title,
+        body,
+        data: { ...data },
+        sound: true,
+      },
+      trigger: {
+        channelId: 'default',
+        date: nextDate,
+      },
+    });
+    
+    console.log(`[Notifications] Reprogramada notificación "${title}" para ${nextDate.toLocaleString()}`);
+  } catch (error) {
+    console.error('[Notifications] Error al reprogramar notificación:', error);
+  }
+};
+
+/**
+ * Inicializar el listener para reprogramar notificaciones cada 2/3 días
+ * Debe llamarse al iniciar la app
+ */
+export const initializeNotificationListeners = () => {
+  // Evitar duplicar el listener
+  if (notificationReceivedSubscription) {
+    notificationReceivedSubscription.remove();
+  }
+  
+  // Escuchar cuando se recibe una notificación
+  notificationReceivedSubscription = Notifications.addNotificationReceivedListener(
+    async (notification) => {
+      // Reprogramar si es una notificación con frecuencia cada 2/3 días
+      await rescheduleIntervalNotification(notification);
+    }
+  );
+  
+  console.log('[Notifications] Listeners inicializados');
+};
+
+/**
+ * Limpiar los listeners de notificaciones
+ * Llamar al desmontar la app si es necesario
+ */
+export const cleanupNotificationListeners = () => {
+  if (notificationReceivedSubscription) {
+    notificationReceivedSubscription.remove();
+    notificationReceivedSubscription = null;
   }
 };

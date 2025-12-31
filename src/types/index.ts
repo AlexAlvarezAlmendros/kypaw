@@ -73,8 +73,9 @@ export interface Reminder {
   type: ReminderType;
   scheduledAt: Timestamp;
   completed: boolean;
+  completedDates?: string[]; // Array de fechas completadas (formato YYYY-MM-DD) para recordatorios recurrentes
   notificationId?: string; // ID de la notificación de Expo
-  frequency?: 'ONCE' | 'DAILY' | 'WEEKLY' | 'MONTHLY';
+  frequency?: 'ONCE' | 'DAILY' | 'EVERY_TWO_DAYS' | 'EVERY_THREE_DAYS' | 'WEEKLY' | 'MONTHLY';
   notes?: string;
   createdAt: Timestamp;
 }

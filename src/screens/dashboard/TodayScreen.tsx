@@ -1,24 +1,46 @@
-import React, { useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
-import { FAB, ActivityIndicator, useTheme, Icon } from 'react-native-paper';
+import React, { useCallback, useMemo, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, Alert } from 'react-native';
+import { FAB, ActivityIndicator, useTheme, Icon, SegmentedButtons } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { spacing } from '../../constants/theme';
 import { useAuthStore } from '../../store/authStore';
-import { useTodayItems } from '../../hooks';
-import { ReminderItem, VisitItem } from '../../components/ui';
+import { useTodayItems, useCalendarItems } from '../../hooks';
+import { ReminderItem, VisitItem, CalendarView } from '../../components/ui';
 import { Reminder, VetVisit, RootStackParamList } from '../../types';
+import { deleteReminder } from '../../services/reminderService';
 
 type TodayScreenProp = NativeStackNavigationProp<RootStackParamList>;
+type ViewMode = 'agenda' | 'calendar';
 
 const TodayScreen = () => {
   const theme = useTheme();
   const navigation = useNavigation<TodayScreenProp>();
   const insets = useSafeAreaInsets();
   const user = useAuthStore((state) => state.user);
+  const [viewMode, setViewMode] = useState<ViewMode>('agenda');
 
-  const { items: todayItems, loading, refreshing, refresh, toggleReminderComplete } = useTodayItems(user?.uid);
+  // Hook para vista de agenda (hoy)
+  const { 
+    items: todayItems, 
+    loading: todayLoading, 
+    refreshing: todayRefreshing, 
+    refresh: todayRefresh, 
+    toggleReminderComplete: todayToggle 
+  } = useTodayItems(user?.uid);
+
+  // Hook para vista de calendario
+  const {
+    markedDates,
+    selectedDate,
+    selectedDateItems,
+    loading: calendarLoading,
+    refreshing: calendarRefreshing,
+    setSelectedDate,
+    refresh: calendarRefresh,
+    toggleReminderComplete: calendarToggle,
+  } = useCalendarItems(user?.uid);
 
   const getReminderColor = useCallback((type: string): string => {
     switch (type) {
@@ -52,74 +74,100 @@ const TodayScreen = () => {
   }, [navigation]);
 
   const handleToggleReminder = useCallback((reminderId: string) => {
-    toggleReminderComplete(reminderId);
-  }, [toggleReminderComplete]);
+    if (viewMode === 'agenda') {
+      todayToggle(reminderId);
+    } else {
+      calendarToggle(reminderId);
+    }
+  }, [viewMode, todayToggle, calendarToggle]);
 
   const handleNavigateToPets = useCallback(() => {
     (navigation as any).navigate('Pets');
   }, [navigation]);
 
   const handleVisitPress = useCallback((petId: string) => {
-    // En el futuro, podrías navegar al detalle de la visita
     (navigation as any).navigate('Pets');
   }, [navigation]);
 
-  return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <ScrollView 
+  const handleViewModeChange = useCallback((value: string) => {
+    setViewMode(value as ViewMode);
+  }, []);
+
+  const handleEditReminder = useCallback((reminderId: string) => {
+    navigation.navigate('AddReminder', { reminderId });
+  }, [navigation]);
+
+  const handleDeleteReminder = useCallback(async (reminderId: string) => {
+    if (!user) return;
+    
+    try {
+      await deleteReminder(user.uid, reminderId);
+      // Refrescar la lista después de eliminar
+      if (viewMode === 'agenda') {
+        todayRefresh();
+      } else {
+        calendarRefresh();
+      }
+    } catch (error) {
+      Alert.alert('Error', 'No se pudo eliminar el recordatorio');
+    }
+  }, [user, viewMode, todayRefresh, calendarRefresh]);
+
+  // Vista de Agenda (Timeline)
+  const renderAgendaView = () => {
+    return (
+      <ScrollView
         contentContainerStyle={styles.scrollContent}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={refresh} />
+          <RefreshControl refreshing={todayRefreshing} onRefresh={todayRefresh} />
         }
       >
-        <View style={[styles.header, { paddingTop: insets.top + spacing.lg, backgroundColor: theme.colors.surface }]}>
-          <Text style={[styles.greeting, { color: theme.colors.onSurface }]}>Hola 👋</Text>
-          <Text style={[styles.date, { color: theme.colors.onSurfaceVariant }]}>{capitalizedDate}</Text>
-        </View>
-
         <View style={styles.body}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>Tareas de Hoy</Text>
+          <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
+            Tareas de Hoy
+          </Text>
 
-          {loading ? (
+          {todayLoading ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color={theme.colors.primary} />
             </View>
           ) : todayItems.length === 0 ? (
-            /* Empty State */
             <View style={styles.emptyState}>
               <Icon
                 source="calendar-check"
                 size={80}
                 color={theme.colors.onSurfaceVariant}
               />
-              <Text style={[styles.emptyTitle, { color: theme.colors.onSurface }]}>¡Todo tranquilo por aquí!</Text>
+              <Text style={[styles.emptyTitle, { color: theme.colors.onSurface }]}>
+                ¡Todo tranquilo por aquí!
+              </Text>
               <Text style={[styles.emptySubtitle, { color: theme.colors.onSurfaceVariant }]}>
                 No tienes tareas programadas para hoy.{'\n'}
                 Usa el botón + para agregar recordatorios.
               </Text>
             </View>
           ) : (
-            /* Timeline de Tareas */
             <View style={styles.timeline}>
               {todayItems.map((item, index) => {
                 if (item.type === 'reminder') {
                   const reminder = item.data as Reminder;
                   const reminderColor = getReminderColor(reminder.type);
-                  
+
                   return (
                     <ReminderItem
                       key={`reminder-${item.id}`}
                       item={item}
                       reminderColor={reminderColor}
                       onToggleComplete={handleToggleReminder}
+                      onEdit={handleEditReminder}
+                      onDelete={handleDeleteReminder}
                       showConnectorLine={index < todayItems.length - 1}
                     />
                   );
                 } else {
-                  // Visita veterinaria
                   const visit = item.data as VetVisit;
                   const visitColor = getReminderColor('VISIT');
-                  
+
                   return (
                     <VisitItem
                       key={`visit-${item.id}`}
@@ -135,6 +183,56 @@ const TodayScreen = () => {
           )}
         </View>
       </ScrollView>
+    );
+  };
+
+  return (
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      {/* Header */}
+      <View style={[styles.header, { paddingTop: insets.top + spacing.lg, backgroundColor: theme.colors.surface }]}>
+        <Text style={[styles.greeting, { color: theme.colors.onSurface }]}>Hola 👋</Text>
+        <Text style={[styles.date, { color: theme.colors.onSurfaceVariant }]}>{capitalizedDate}</Text>
+
+        {/* View Mode Toggle */}
+        <View style={styles.segmentedContainer}>
+          <SegmentedButtons
+            value={viewMode}
+            onValueChange={handleViewModeChange}
+            buttons={[
+              {
+                value: 'agenda',
+                label: 'Agenda',
+                icon: 'format-list-bulleted',
+              },
+              {
+                value: 'calendar',
+                label: 'Calendario',
+                icon: 'calendar-month',
+              },
+            ]}
+            style={styles.segmentedButtons}
+          />
+        </View>
+      </View>
+
+      {/* Content based on view mode */}
+      {viewMode === 'agenda' ? (
+        renderAgendaView()
+      ) : (
+        <CalendarView
+          markedDates={markedDates}
+          selectedDate={selectedDate}
+          selectedDateItems={selectedDateItems}
+          loading={calendarLoading}
+          refreshing={calendarRefreshing}
+          onDateSelect={setSelectedDate}
+          onRefresh={calendarRefresh}
+          onToggleComplete={handleToggleReminder}
+          onVisitPress={handleVisitPress}
+          onEditReminder={handleEditReminder}
+          onDeleteReminder={handleDeleteReminder}
+        />
+      )}
 
       {/* Floating Action Button */}
       <FAB
@@ -165,6 +263,12 @@ const styles = StyleSheet.create({
   date: {
     fontSize: 16,
     marginTop: spacing.xs,
+  },
+  segmentedContainer: {
+    marginTop: spacing.md,
+  },
+  segmentedButtons: {
+    // Los estilos de SegmentedButtons ya manejan su apariencia
   },
   body: {
     padding: spacing.lg,

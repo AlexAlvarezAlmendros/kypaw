@@ -57,6 +57,8 @@ const REMINDER_TYPES: { value: ReminderType; label: string; icon: string }[] = [
 const FREQUENCIES = [
   { value: 'ONCE', label: 'Una vez' },
   { value: 'DAILY', label: 'Diaria' },
+  { value: 'EVERY_TWO_DAYS', label: 'Cada 2 días' },
+  { value: 'EVERY_THREE_DAYS', label: 'Cada 3 días' },
   { value: 'WEEKLY', label: 'Semanal' },
   { value: 'MONTHLY', label: 'Mensual' },
 ];
@@ -78,7 +80,7 @@ export default function AddReminderScreen() {
   const [selectedPetId, setSelectedPetId] = useState<string>('');
   const [title, setTitle] = useState('');
   const [type, setType] = useState<ReminderType>('MEDICATION');
-  const [frequency, setFrequency] = useState<'ONCE' | 'DAILY' | 'WEEKLY' | 'MONTHLY'>('ONCE');
+  const [frequency, setFrequency] = useState<'ONCE' | 'DAILY' | 'EVERY_TWO_DAYS' | 'EVERY_THREE_DAYS' | 'WEEKLY' | 'MONTHLY'>('ONCE');
   const [notes, setNotes] = useState('');
 
   // Fecha y hora
@@ -108,6 +110,13 @@ export default function AddReminderScreen() {
       loadReminder();
     }
   }, [reminderId, user]);
+
+  // Actualizar título de la pantalla según modo
+  useEffect(() => {
+    navigation.setOptions({
+      title: isEditing ? 'Editar Recordatorio' : 'Nuevo Recordatorio',
+    });
+  }, [isEditing, navigation]);
 
   const loadReminder = async () => {
     if (!user || !reminderId) return;
