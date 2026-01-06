@@ -26,7 +26,10 @@ export interface Pet {
   // Datos operativos
   food?: {
     brand: string;
-    dailyAmount: number; // en gramos
+    type?: 'Pienso' | 'Húmedo' | 'Natural' | 'Mixto'; // tipo de comida
+    purchaseAmount: number; // cantidad que se compra en gramos (ej: 2000g = 2kg)
+    dailyAmount: number; // cantidad diaria en gramos
+    lastPurchaseDate?: Timestamp; // fecha de la última compra
   };
   insurance?: {
     policyNumber: string;

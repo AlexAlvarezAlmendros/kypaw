@@ -8,7 +8,6 @@ import {
   Platform,
   TouchableOpacity,
   Image,
-  Alert,
 } from 'react-native';
 import { TextInput, SegmentedButtons } from 'react-native-paper';
 import { useForm, Controller } from 'react-hook-form';
@@ -27,6 +26,7 @@ import { usePetStore } from '../../store/petStore';
 import { PetsStackParamList } from '../../types';
 import { z } from 'zod';
 import { StackActions } from '@react-navigation/native';
+import { useDialog } from '../../contexts/DialogContext';
 
 type EditPetRouteProp = RouteProp<PetsStackParamList, 'EditPet'>;
 type EditPetNavigationProp = NativeStackNavigationProp<PetsStackParamList, 'EditPet'>;
@@ -39,6 +39,7 @@ const EditPetScreen = () => {
   const route = useRoute<EditPetRouteProp>();
   const { user } = useAuthStore();
   const { pets, updateExistingPet, removePet } = usePetStore();
+  const { showDialog, showError, showSuccess, showDestructiveConfirm } = useDialog();
   
   const { petId } = route.params;
   const pet = pets.find((p) => p.id === petId);
@@ -62,6 +63,11 @@ const EditPetScreen = () => {
       birthDate: pet?.birthDate?.toDate() || new Date(),
       weight: pet?.weight || undefined,
       chipNumber: pet?.chipNumber || '',
+      // Campos de alimentación
+      foodBrand: pet?.food?.brand || '',
+      foodType: pet?.food?.type || undefined,
+      foodPurchaseAmount: pet?.food?.purchaseAmount || undefined,
+      foodDailyAmount: pet?.food?.dailyAmount || undefined,
     },
   });
 
@@ -69,9 +75,7 @@ const EditPetScreen = () => {
 
   useEffect(() => {
     if (!pet) {
-      Alert.alert('Error', 'Mascota no encontrada', [
-        { text: 'OK', onPress: () => navigation.goBack() },
-      ]);
+      showError('Error', 'Mascota no encontrada', () => navigation.goBack());
     }
   }, [pet]);
 
@@ -83,7 +87,7 @@ const EditPetScreen = () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     
     if (status !== 'granted') {
-      Alert.alert(
+      showError(
         'Permisos necesarios',
         'Necesitamos acceso a tu galería para seleccionar una foto'
       );
@@ -106,7 +110,7 @@ const EditPetScreen = () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     
     if (status !== 'granted') {
-      Alert.alert(
+      showError(
         'Permisos necesarios',
         'Necesitamos acceso a tu cámara para tomar una foto'
       );
@@ -125,16 +129,22 @@ const EditPetScreen = () => {
   };
 
   const showImageOptions = () => {
-    Alert.alert(
-      'Foto de Perfil',
-      'Elige una opción',
-      [
-        { text: 'Tomar foto', onPress: takePhoto },
-        { text: 'Elegir de galería', onPress: pickImage },
-        photoUri && { text: 'Eliminar foto', onPress: () => setPhotoUri(null), style: 'destructive' },
-        { text: 'Cancelar', style: 'cancel' },
-      ].filter(Boolean) as any
-    );
+    const buttons = [
+      { text: 'Cancelar', style: 'cancel' as const, onPress: () => {} },
+      { text: 'Tomar foto', onPress: takePhoto },
+      { text: 'Elegir de galería', onPress: pickImage },
+    ];
+    
+    if (photoUri) {
+      buttons.push({ text: 'Eliminar foto', style: 'destructive' as const, onPress: () => setPhotoUri(null) });
+    }
+    
+    showDialog({
+      title: 'Foto de Perfil',
+      message: 'Elige una opción',
+      type: 'info',
+      buttons,
+    });
   };
 
   const onSubmit = async (data: PetFormData) => {
@@ -146,22 +156,35 @@ const EditPetScreen = () => {
       // TODO: Subir nueva foto a Firebase Storage si cambió photoUri
       const photoUrl = photoUri || undefined;
 
+      // Construir objeto food solo si hay datos de alimentación
+      const food = data.foodBrand || data.foodType || data.foodPurchaseAmount || data.foodDailyAmount
+        ? {
+            brand: data.foodBrand || '',
+            type: data.foodType,
+            purchaseAmount: data.foodPurchaseAmount || 0,
+            dailyAmount: data.foodDailyAmount || 0,
+          }
+        : undefined;
+
       // Convertir Date a Timestamp de Firestore
       const updates = {
-        ...data,
+        name: data.name,
+        species: data.species,
+        breed: data.breed,
         birthDate: Timestamp.fromDate(data.birthDate),
+        weight: data.weight,
+        chipNumber: data.chipNumber,
         photoUrl,
+        food,
       };
 
       await updateExistingPet(user.uid, pet.id, updates);
 
-      Alert.alert('¡Éxito!', 'Mascota actualizada correctamente', [
-        { text: 'OK', onPress: () => navigation.goBack() },
-      ]);
+      showSuccess('¡Éxito!', 'Mascota actualizada correctamente', () => navigation.goBack());
     } catch (error: any) {
       console.error('Error actualizando mascota:', error);
       console.error('Error completo:', JSON.stringify(error, null, 2));
-      Alert.alert('Error', 'No se pudo actualizar la mascota. Intenta de nuevo.');
+      showError('Error', 'No se pudo actualizar la mascota. Intenta de nuevo.');
     } finally {
       setLoading(false);
     }
@@ -175,38 +198,26 @@ const EditPetScreen = () => {
   };
 
   const handleDelete = () => {
-    Alert.alert(
+    showDestructiveConfirm(
       'Eliminar Mascota',
       `¿Estás seguro de que deseas eliminar a ${pet.name}? Esta acción no se puede deshacer.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar',
-          style: 'destructive',
-          onPress: async () => {
-            if (!user) return;
-            try {
-              setLoading(true);
-              await removePet(user.uid, pet.id);
-              Alert.alert('Eliminado', 'Mascota eliminada correctamente', [
-                { 
-                  text: 'OK', 
-                  onPress: () => {
-                    // Navegar a la lista de mascotas eliminando todas las pantallas intermedias
-                    navigation.dispatch(
-                      StackActions.replace('PetsList')
-                    );
-                  }
-                },
-              ]);
-            } catch (error) {
-              Alert.alert('Error', 'No se pudo eliminar la mascota');
-            } finally {
-              setLoading(false);
-            }
-          },
-        },
-      ]
+      async () => {
+        if (!user) return;
+        try {
+          setLoading(true);
+          await removePet(user.uid, pet.id);
+          showSuccess('Eliminado', 'Mascota eliminada correctamente', () => {
+            navigation.dispatch(StackActions.replace('PetsList'));
+          });
+        } catch (error) {
+          showError('Error', 'No se pudo eliminar la mascota');
+        } finally {
+          setLoading(false);
+        }
+      },
+      undefined,
+      'Eliminar',
+      'Cancelar'
     );
   };
 
@@ -369,6 +380,87 @@ const EditPetScreen = () => {
             )}
           />
 
+          {/* Sección Alimentación */}
+          <View style={styles.sectionHeader}>
+            <Icon source="food-drumstick" size={24} color={theme.colors.primary} />
+            <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>Alimentación</Text>
+          </View>
+
+          {/* Marca de comida */}
+          <Controller
+            control={control}
+            name="foodBrand"
+            render={({ field: { onChange, value } }) => (
+              <Input
+                label="Marca de comida"
+                value={value}
+                onChangeText={onChange}
+                placeholder="Ej: Royal Canin, Purina..."
+                left={<TextInput.Icon icon="food-drumstick" />}
+              />
+            )}
+          />
+
+          {/* Tipo de comida */}
+          <Text style={[styles.fieldLabel, { color: theme.colors.onSurface }]}>Tipo de comida</Text>
+          <Controller
+            control={control}
+            name="foodType"
+            render={({ field: { onChange, value } }) => (
+              <SegmentedButtons
+                value={value || ''}
+                onValueChange={(val) => onChange(val || undefined)}
+                buttons={[
+                  { value: 'Pienso', label: 'Pienso' },
+                  { value: 'Húmedo', label: 'Húmedo' },
+                  { value: 'Natural', label: 'Natural' },
+                  { value: 'Mixto', label: 'Mixto' },
+                ]}
+                style={styles.segmentedButtons}
+              />
+            )}
+          />
+
+          {/* Cantidad comprada (paquete) */}
+          <Controller
+            control={control}
+            name="foodPurchaseAmount"
+            render={({ field: { onChange, value } }) => (
+              <Input
+                label="Cantidad del paquete (gramos)"
+                value={value?.toString() || ''}
+                onChangeText={(text) => {
+                  const num = parseFloat(text);
+                  onChange(isNaN(num) ? undefined : num);
+                }}
+                placeholder="Ej: 2000 (para 2kg)"
+                keyboardType="decimal-pad"
+                error={errors.foodPurchaseAmount?.message}
+                left={<TextInput.Icon icon="package-variant" />}
+              />
+            )}
+          />
+
+          {/* Cantidad diaria */}
+          <Controller
+            control={control}
+            name="foodDailyAmount"
+            render={({ field: { onChange, value } }) => (
+              <Input
+                label="Ración diaria (gramos)"
+                value={value?.toString() || ''}
+                onChangeText={(text) => {
+                  const num = parseFloat(text);
+                  onChange(isNaN(num) ? undefined : num);
+                }}
+                placeholder="Ej: 150"
+                keyboardType="decimal-pad"
+                error={errors.foodDailyAmount?.message}
+                left={<TextInput.Icon icon="bowl-mix" />}
+              />
+            )}
+          />
+
           {/* Botones */}
           <View style={styles.buttonContainer}>
             <Button
@@ -450,6 +542,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     marginBottom: spacing.xs,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.lg,
+    marginBottom: spacing.sm,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E5E5',
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
   },
   segmentedButtons: {
     marginBottom: spacing.xs,

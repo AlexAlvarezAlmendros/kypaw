@@ -14,7 +14,6 @@ import {
   View,
   ScrollView,
   StyleSheet,
-  Alert,
   Platform,
   KeyboardAvoidingView,
 } from 'react-native';
@@ -43,6 +42,7 @@ import {
 } from '../../services/notificationService';
 import { RootStackParamList, ReminderType } from '../../types';
 import { spacing } from '../../constants/theme';
+import { useDialog } from '../../contexts/DialogContext';
 
 type AddReminderScreenProp = NativeStackNavigationProp<RootStackParamList>;
 type AddReminderRouteProp = RouteProp<RootStackParamList, 'AddReminder'>;
@@ -67,6 +67,7 @@ export default function AddReminderScreen() {
   const theme = useTheme();
   const navigation = useNavigation<AddReminderScreenProp>();
   const route = useRoute<AddReminderRouteProp>();
+  const { showError, showSuccess, showConfirm } = useDialog();
   const { reminderId } = route.params || {};
 
   const user = useAuthStore((state) => state.user);
@@ -137,7 +138,7 @@ export default function AddReminderScreen() {
       }
     } catch (error: any) {
       console.error('Error al cargar recordatorio:', error);
-      Alert.alert('Error', 'No se pudo cargar el recordatorio');
+      showError('Error', 'No se pudo cargar el recordatorio');
     } finally {
       setLoading(false);
     }
@@ -171,22 +172,22 @@ export default function AddReminderScreen() {
   const handleSave = async () => {
     // Validaciones
     if (!user) {
-      Alert.alert('Error', 'Usuario no autenticado');
+      showError('Error', 'Usuario no autenticado');
       return;
     }
 
     if (!selectedPetId) {
-      Alert.alert('Error', 'Selecciona una mascota');
+      showError('Error', 'Selecciona una mascota');
       return;
     }
 
     if (!title.trim()) {
-      Alert.alert('Error', 'Ingresa un título para el recordatorio');
+      showError('Error', 'Ingresa un título para el recordatorio');
       return;
     }
 
     if (selectedDate < new Date() && !isEditing) {
-      Alert.alert('Error', 'La fecha debe ser futura');
+      showError('Error', 'La fecha debe ser futura');
       return;
     }
 
@@ -196,14 +197,15 @@ export default function AddReminderScreen() {
       // Solicitar permisos de notificaciones
       const hasPermissions = await requestNotificationPermissions();
       if (!hasPermissions) {
-        Alert.alert(
+        showConfirm(
           'Permisos denegados',
           'No se podrán enviar notificaciones. ¿Continuar sin notificaciones?',
-          [
-            { text: 'Cancelar', style: 'cancel' },
-            { text: 'Continuar', onPress: () => saveWithoutNotification() },
-          ]
+          () => saveWithoutNotification(),
+          undefined,
+          'Continuar',
+          'Cancelar'
         );
+        setLoading(false);
         return;
       }
 
@@ -250,16 +252,15 @@ export default function AddReminderScreen() {
 
       if (isEditing && reminderId) {
         await updateReminder(user.uid, reminderId, reminderData);
-        Alert.alert('Éxito', 'Recordatorio actualizado');
+        showSuccess('Éxito', 'Recordatorio actualizado', () => navigation.goBack());
       } else {
         await createReminder(user.uid, reminderData);
-        Alert.alert('Éxito', 'Recordatorio creado');
+        showSuccess('Éxito', 'Recordatorio creado', () => navigation.goBack());
       }
 
-      navigation.goBack();
     } catch (error: any) {
       console.error('Error al guardar recordatorio:', error);
-      Alert.alert('Error', error.message || 'No se pudo guardar el recordatorio');
+      showError('Error', error.message || 'No se pudo guardar el recordatorio');
     } finally {
       setLoading(false);
     }
@@ -283,16 +284,15 @@ export default function AddReminderScreen() {
 
       if (isEditing && reminderId) {
         await updateReminder(user.uid, reminderId, reminderData);
-        Alert.alert('Éxito', 'Recordatorio actualizado');
+        showSuccess('Éxito', 'Recordatorio actualizado', () => navigation.goBack());
       } else {
         await createReminder(user.uid, reminderData);
-        Alert.alert('Éxito', 'Recordatorio creado (sin notificación)');
+        showSuccess('Éxito', 'Recordatorio creado (sin notificación)', () => navigation.goBack());
       }
 
-      navigation.goBack();
     } catch (error: any) {
       console.error('Error al guardar recordatorio:', error);
-      Alert.alert('Error', error.message || 'No se pudo guardar el recordatorio');
+      showError('Error', error.message || 'No se pudo guardar el recordatorio');
     } finally {
       setLoading(false);
     }

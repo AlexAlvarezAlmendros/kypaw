@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { List, Divider, Dialog, Portal, Avatar, RadioButton, useTheme } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '../../components/ui';
 import { spacing } from '../../constants/theme';
 import { useAuth } from '../../hooks/useAuth';
 import { useColorSchemeStore } from '../../hooks/useColorScheme';
+import { useDialog } from '../../contexts/DialogContext';
 
 const SettingsScreen = () => {
   const { user, logout, loading } = useAuth();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const { showAlert, showError } = useDialog();
   const [logoutDialogVisible, setLogoutDialogVisible] = useState(false);
   const [themeDialogVisible, setThemeDialogVisible] = useState(false);
   
@@ -21,7 +23,7 @@ const SettingsScreen = () => {
       await logout();
       setLogoutDialogVisible(false);
     } catch (error) {
-      Alert.alert('Error', 'No se pudo cerrar sesión. Intenta de nuevo.');
+      showError('Error', 'No se pudo cerrar sesión. Intenta de nuevo.');
     }
   };
 
@@ -74,7 +76,7 @@ const SettingsScreen = () => {
           right={(props) => <List.Icon {...props} icon="chevron-right" />}
           onPress={() => {
             // TODO: Navegar a editar perfil
-            Alert.alert('Próximamente', 'Función en desarrollo');
+            showAlert('Próximamente', 'Función en desarrollo');
           }}
         />
         <Divider />
@@ -85,7 +87,7 @@ const SettingsScreen = () => {
           right={(props) => <List.Icon {...props} icon="chevron-right" />}
           onPress={() => {
             // TODO: Navegar a cambiar contraseña
-            Alert.alert('Próximamente', 'Función en desarrollo');
+            showAlert('Próximamente', 'Función en desarrollo');
           }}
         />
       </View>
@@ -99,7 +101,7 @@ const SettingsScreen = () => {
           left={(props) => <List.Icon {...props} icon="bell" color={theme.colors.primary} />}
           right={(props) => <List.Icon {...props} icon="chevron-right" />}
           onPress={() => {
-            Alert.alert('Próximamente', 'Función en desarrollo');
+            showAlert('Próximamente', 'Función en desarrollo');
           }}
         />
         <Divider />
@@ -121,7 +123,7 @@ const SettingsScreen = () => {
           left={(props) => <List.Icon {...props} icon="information" color={theme.colors.primary} />}
           right={(props) => <List.Icon {...props} icon="chevron-right" />}
           onPress={() => {
-            Alert.alert(
+            showAlert(
               'Llepa App',
               'Versión 1.0.0\n\nGestión integral para tus mascotas\n\n© 2025 Alex Álvarez'
             );
@@ -134,7 +136,7 @@ const SettingsScreen = () => {
           left={(props) => <List.Icon {...props} icon="help-circle" color={theme.colors.primary} />}
           right={(props) => <List.Icon {...props} icon="chevron-right" />}
           onPress={() => {
-            Alert.alert('Próximamente', 'Función en desarrollo');
+            showAlert('Próximamente', 'Función en desarrollo');
           }}
         />
         <Divider />
@@ -143,7 +145,7 @@ const SettingsScreen = () => {
           left={(props) => <List.Icon {...props} icon="shield-account" color={theme.colors.primary} />}
           right={(props) => <List.Icon {...props} icon="chevron-right" />}
           onPress={() => {
-            Alert.alert('Próximamente', 'Función en desarrollo');
+            showAlert('Próximamente', 'Función en desarrollo');
           }}
         />
       </View>

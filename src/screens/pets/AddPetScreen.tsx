@@ -8,7 +8,6 @@ import {
   Platform,
   TouchableOpacity,
   Image,
-  Alert,
 } from 'react-native';
 import { TextInput, SegmentedButtons, Menu, useTheme, Icon } from 'react-native-paper';
 import { useForm, Controller } from 'react-hook-form';
@@ -25,6 +24,7 @@ import { usePetStore } from '../../store/petStore';
 import { useImagePicker } from '../../hooks';
 import { PetsStackParamList } from '../../types';
 import { z } from 'zod';
+import { useDialog } from '../../contexts/DialogContext';
 
 type AddPetNavigationProp = NativeStackNavigationProp<PetsStackParamList, 'AddPet'>;
 
@@ -35,6 +35,7 @@ const AddPetScreen = () => {
   const navigation = useNavigation<AddPetNavigationProp>();
   const { user } = useAuthStore();
   const { addPet } = usePetStore();
+  const { showDialog, showSuccess, showError } = useDialog();
   
   const [loading, setLoading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -62,15 +63,16 @@ const AddPetScreen = () => {
   const species = watch('species');
 
   const showImageOptions = () => {
-    Alert.alert(
-      'Foto de Perfil',
-      'Elige una opción',
-      [
+    showDialog({
+      title: 'Foto de Perfil',
+      message: 'Elige una opción',
+      type: 'info',
+      buttons: [
+        { text: 'Cancelar', style: 'cancel', onPress: () => {} },
         { text: 'Tomar foto', onPress: takePhoto },
         { text: 'Elegir de galería', onPress: pickImage },
-        { text: 'Cancelar', style: 'cancel' },
-      ]
-    );
+      ],
+    });
   };
 
   const onSubmit = async (data: PetFormData) => {
@@ -92,13 +94,11 @@ const AddPetScreen = () => {
 
       await addPet(user.uid, petData);
 
-      Alert.alert('¡Éxito!', 'Mascota añadida correctamente', [
-        { text: 'OK', onPress: () => navigation.goBack() },
-      ]);
+      showSuccess('¡Éxito!', 'Mascota añadida correctamente', () => navigation.goBack());
     } catch (error: any) {
       console.error('Error añadiendo mascota:', error);
       console.error('Error completo:', JSON.stringify(error, null, 2));
-      Alert.alert('Error', 'No se pudo añadir la mascota. Intenta de nuevo.');
+      showError('Error', 'No se pudo añadir la mascota. Intenta de nuevo.');
     } finally {
       setLoading(false);
     }

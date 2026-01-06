@@ -1,5 +1,5 @@
 import React, { memo, useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, GestureResponderEvent, Pressable } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, GestureResponderEvent, Pressable } from 'react-native';
 import { Checkbox, Chip, Icon, useTheme, Menu, IconButton } from 'react-native-paper';
 import { spacing } from '../../constants/theme';
 import { Reminder } from '../../types';
@@ -11,6 +11,7 @@ interface ReminderItemProps {
   onToggleComplete: (reminderId: string) => void;
   onEdit?: (reminderId: string) => void;
   onDelete?: (reminderId: string) => void;
+  onRequestDelete?: (reminderId: string, title: string) => void; // Nueva prop para solicitar eliminación con confirmación
   showConnectorLine: boolean;
 }
 
@@ -20,6 +21,7 @@ const ReminderItemComponent: React.FC<ReminderItemProps> = ({
   onToggleComplete,
   onEdit,
   onDelete,
+  onRequestDelete,
   showConnectorLine,
 }) => {
   const theme = useTheme();
@@ -42,18 +44,13 @@ const ReminderItemComponent: React.FC<ReminderItemProps> = ({
 
   const handleDelete = () => {
     setMenuVisible(false);
-    Alert.alert(
-      'Eliminar recordatorio',
-      `¿Estás seguro de que quieres eliminar "${item.title}"?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar',
-          style: 'destructive',
-          onPress: () => onDelete?.(reminder.id),
-        },
-      ]
-    );
+    // Si hay callback de solicitud de eliminación, usarlo (para diálogos personalizados)
+    if (onRequestDelete) {
+      onRequestDelete(reminder.id, item.title);
+    } else if (onDelete) {
+      // Fallback: eliminar directamente sin confirmación
+      onDelete(reminder.id);
+    }
   };
 
   const handleEdit = () => {

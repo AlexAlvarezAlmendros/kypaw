@@ -39,6 +39,7 @@ interface CalendarViewProps {
   onVisitPress: (petId: string) => void;
   onEditReminder?: (reminderId: string) => void;
   onDeleteReminder?: (reminderId: string) => void;
+  onRequestDelete?: (reminderId: string, title: string) => void;
 }
 
 const CalendarView: React.FC<CalendarViewProps> = ({
@@ -53,6 +54,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   onVisitPress,
   onEditReminder,
   onDeleteReminder,
+  onRequestDelete,
 }) => {
   const theme = useTheme();
 
@@ -172,6 +174,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                     onToggleComplete={onToggleComplete}
                     onEdit={onEditReminder}
                     onDelete={onDeleteReminder}
+                    onRequestDelete={onRequestDelete}
                     showConnectorLine={index < selectedDateItems.length - 1}
                   />
                 );

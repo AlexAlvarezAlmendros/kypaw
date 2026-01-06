@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { FAB, ActivityIndicator, useTheme, Icon, SegmentedButtons } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -10,6 +10,7 @@ import { useTodayItems, useCalendarItems } from '../../hooks';
 import { ReminderItem, VisitItem, CalendarView } from '../../components/ui';
 import { Reminder, VetVisit, RootStackParamList } from '../../types';
 import { deleteReminder } from '../../services/reminderService';
+import { useDialog } from '../../contexts/DialogContext';
 
 type TodayScreenProp = NativeStackNavigationProp<RootStackParamList>;
 type ViewMode = 'agenda' | 'calendar';
@@ -20,6 +21,7 @@ const TodayScreen = () => {
   const insets = useSafeAreaInsets();
   const user = useAuthStore((state) => state.user);
   const [viewMode, setViewMode] = useState<ViewMode>('agenda');
+  const { showError, showDestructiveConfirm } = useDialog();
 
   // Hook para vista de agenda (hoy)
   const { 
@@ -109,9 +111,20 @@ const TodayScreen = () => {
         calendarRefresh();
       }
     } catch (error) {
-      Alert.alert('Error', 'No se pudo eliminar el recordatorio');
+      showError('Error', 'No se pudo eliminar el recordatorio');
     }
-  }, [user, viewMode, todayRefresh, calendarRefresh]);
+  }, [user, viewMode, todayRefresh, calendarRefresh, showError]);
+
+  const handleRequestDeleteReminder = useCallback((reminderId: string, title: string) => {
+    showDestructiveConfirm(
+      'Eliminar recordatorio',
+      `¿Estás seguro de que quieres eliminar "${title}"?`,
+      () => handleDeleteReminder(reminderId),
+      undefined,
+      'Eliminar',
+      'Cancelar'
+    );
+  }, [showDestructiveConfirm, handleDeleteReminder]);
 
   // Vista de Agenda (Timeline)
   const renderAgendaView = () => {
@@ -161,6 +174,7 @@ const TodayScreen = () => {
                       onToggleComplete={handleToggleReminder}
                       onEdit={handleEditReminder}
                       onDelete={handleDeleteReminder}
+                      onRequestDelete={handleRequestDeleteReminder}
                       showConnectorLine={index < todayItems.length - 1}
                     />
                   );
@@ -231,6 +245,7 @@ const TodayScreen = () => {
           onVisitPress={handleVisitPress}
           onEditReminder={handleEditReminder}
           onDeleteReminder={handleDeleteReminder}
+          onRequestDelete={handleRequestDeleteReminder}
         />
       )}
 

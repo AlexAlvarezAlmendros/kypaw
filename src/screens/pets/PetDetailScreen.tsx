@@ -6,18 +6,19 @@ import {
   ScrollView,
   Image,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Chip, Divider, List, IconButton, useTheme, Icon } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Timestamp } from 'firebase/firestore';
 import { spacing } from '../../constants/theme';
-import { Card, Loading } from '../../components/ui';
+import { Card, Loading, FeedingSection } from '../../components/ui';
 import { useAuthStore } from '../../store/authStore';
 import { usePetStore } from '../../store/petStore';
 import { PetsStackParamList } from '../../types';
 import { calculateAge } from '../../utils/dateUtils';
+import { useDialog } from '../../contexts/DialogContext';
 
 type PetDetailRouteProp = RouteProp<PetsStackParamList, 'PetDetail'>;
 type PetDetailNavigationProp = NativeStackNavigationProp<PetsStackParamList, 'PetDetail'>;
@@ -28,7 +29,8 @@ const PetDetailScreen = () => {
   const navigation = useNavigation<PetDetailNavigationProp>();
   const insets = useSafeAreaInsets();
   const { user } = useAuthStore();
-  const { pets, removePet } = usePetStore();
+  const { pets, removePet, updateExistingPet } = usePetStore();
+  const { showConfirm, showSuccess, showError } = useDialog();
   
   const { petId } = route.params;
   const pet = pets.find((p) => p.id === petId);
@@ -45,6 +47,34 @@ const PetDetailScreen = () => {
   }
 
   const age = pet.birthDate ? calculateAge(pet.birthDate.toDate()) : null;
+
+  const handleResetPurchase = () => {
+    showConfirm(
+      'Nueva compra',
+      '¿Has comprado un nuevo paquete de comida?',
+      async () => {
+        if (!user || !pet.food) return;
+        try {
+          setLoading(true);
+          await updateExistingPet(user.uid, pet.id, {
+            food: {
+              ...pet.food,
+              lastPurchaseDate: Timestamp.now(),
+            },
+          });
+          showSuccess('¡Listo!', 'Se ha registrado la nueva compra');
+        } catch (error) {
+          console.error('Error al reiniciar compra:', error);
+          showError('Error', 'No se pudo registrar la compra');
+        } finally {
+          setLoading(false);
+        }
+      },
+      undefined,
+      'Sí, reiniciar',
+      'Cancelar'
+    );
+  };
 
   const getSpeciesIcon = (species: string) => {
     switch (species) {
@@ -183,6 +213,13 @@ const PetDetailScreen = () => {
               <Text style={[styles.infoValue, { color: theme.colors.onSurface }]}>{pet.chipNumber}</Text>
             </View>
           )}
+        </Card>
+
+        {/* Sección Alimentación */}
+        <Card style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>Alimentación</Text>
+          <Divider style={styles.divider} />
+          <FeedingSection food={pet.food} onResetPurchase={handleResetPurchase} />
         </Card>
 
         {/* Sección Salud */}

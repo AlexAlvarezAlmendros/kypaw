@@ -24,6 +24,11 @@ export const petSchema = z.object({
   birthDate: z.date({ message: 'La fecha de nacimiento es requerida' }),
   weight: z.number().positive('El peso debe ser positivo').optional(),
   chipNumber: z.string().optional(),
+  // Campos de alimentación
+  foodBrand: z.string().optional(),
+  foodType: z.enum(['Pienso', 'Húmedo', 'Natural', 'Mixto']).optional(),
+  foodPurchaseAmount: z.number().positive('La cantidad debe ser positiva').optional(),
+  foodDailyAmount: z.number().positive('La cantidad debe ser positiva').optional(),
 });
 
 // Schema de validación para visita veterinaria
