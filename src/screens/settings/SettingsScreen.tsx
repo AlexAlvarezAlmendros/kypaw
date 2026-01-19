@@ -144,7 +144,7 @@ const SettingsScreen = () => {
           right={(props) => <List.Icon {...props} icon="chevron-right" />}
           onPress={() => {
             showAlert(
-              'Llepa App',
+              'KyPaw',
               'Versión 1.0.0\n\nGestión integral para tus mascotas\n\n© 2025 Alex Álvarez'
             );
           }}

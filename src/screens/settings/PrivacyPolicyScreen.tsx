@@ -25,8 +25,8 @@ const POLICY_SECTIONS: PolicySection[] = [
     title: 'Introducción',
     icon: 'shield-check',
     content: [
-      'En Llepa App nos tomamos muy en serio la privacidad de nuestros usuarios. Esta Política de Privacidad describe cómo recopilamos, usamos, almacenamos y protegemos tu información personal cuando utilizas nuestra aplicación móvil.',
-      'Al utilizar Llepa App, aceptas las prácticas descritas en esta política. Te recomendamos leerla detenidamente.',
+      'En KyPaw nos tomamos muy en serio la privacidad de nuestros usuarios. Esta Política de Privacidad describe cómo recopilamos, usamos, almacenamos y protegemos tu información personal cuando utilizas nuestra aplicación móvil.',
+      'Al utilizar KyPaw, aceptas las prácticas descritas en esta política. Te recomendamos leerla detenidamente.',
     ],
   },
   {
@@ -115,7 +115,7 @@ const POLICY_SECTIONS: PolicySection[] = [
       '• **Oposición:** Oponerte al procesamiento de tus datos.',
       '• **Limitación:** Solicitar la restricción del procesamiento.',
       '',
-      'Para ejercer estos derechos, contacta con nosotros en: privacidad@llepa-app.com',
+      'Para ejercer estos derechos, contacta con nosotros en: privacidad@kypaw.com',
     ],
   },
   {
@@ -123,7 +123,7 @@ const POLICY_SECTIONS: PolicySection[] = [
     title: 'Cookies y Tecnologías Similares',
     icon: 'cookie',
     content: [
-      'Llepa App utiliza tecnologías de almacenamiento local para:',
+      'KyPaw utiliza tecnologías de almacenamiento local para:',
       '',
       '• Mantener tu sesión iniciada',
       '• Guardar tus preferencias (tema, notificaciones)',
@@ -137,7 +137,7 @@ const POLICY_SECTIONS: PolicySection[] = [
     title: 'Menores de Edad',
     icon: 'account-child',
     content: [
-      'Llepa App no está dirigida a menores de 16 años. No recopilamos intencionadamente información de menores de esta edad.',
+      'KyPaw no está dirigida a menores de 16 años. No recopilamos intencionadamente información de menores de esta edad.',
       '',
       'Si eres padre o tutor y descubres que tu hijo ha proporcionado información personal, contacta con nosotros para eliminarla.',
     ],
@@ -163,11 +163,11 @@ const POLICY_SECTIONS: PolicySection[] = [
     content: [
       'Si tienes preguntas sobre esta Política de Privacidad o sobre cómo tratamos tus datos, puedes contactarnos:',
       '',
-      '**Correo electrónico:** privacidad@llepa-app.com',
-      '**Web:** https://llepa-app.com/privacidad',
+      '**Correo electrónico:** privacidad@kypaw.com',
+      '**Web:** https://kypaw.com/privacidad',
       '',
       '**Responsable del tratamiento:**',
-      'Llepa App',
+      'KyPaw',
       'España',
     ],
   },
@@ -292,10 +292,10 @@ const PrivacyPolicyScreen = () => {
       {/* Footer */}
       <View style={styles.footer}>
         <Text style={[styles.footerText, { color: theme.colors.onSurfaceVariant }]}>
-          Al utilizar Llepa App, aceptas esta Política de Privacidad.
+          Al utilizar KyPaw, aceptas esta Política de Privacidad.
         </Text>
         <Text style={[styles.footerText, { color: theme.colors.onSurfaceVariant, marginTop: spacing.sm }]}>
-          © 2026 Llepa App. Todos los derechos reservados.
+          © 2026 KyPaw. Todos los derechos reservados.
         </Text>
       </View>
     </ScrollView>

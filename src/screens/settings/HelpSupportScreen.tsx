@@ -140,8 +140,8 @@ const HelpSupportScreen = () => {
   };
   
   const handleEmailSupport = () => {
-    const email = 'soporte@llepa-app.com';
-    const subject = 'Soporte Llepa App';
+    const email = 'soporte@kypaw.com';
+    const subject = 'Soporte KyPaw';
     const body = `
 Hola equipo de soporte,
 
@@ -162,16 +162,16 @@ Información del dispositivo:
   };
   
   const handleOpenWebsite = () => {
-    Linking.openURL('https://llepa-app.com').catch(() => {
+    Linking.openURL('https://kypaw.com').catch(() => {
       showAlert('Error', 'No se pudo abrir el navegador');
     });
   };
   
   const handleRateApp = () => {
     const storeUrl = Platform.select({
-      ios: 'https://apps.apple.com/app/llepa/id000000000', // Reemplazar con ID real
-      android: 'https://play.google.com/store/apps/details?id=com.llepa.app', // Reemplazar con ID real
-      default: 'https://llepa-app.com',
+      ios: 'https://apps.apple.com/app/kypaw/id000000000', // Reemplazar con ID real
+      android: 'https://play.google.com/store/apps/details?id=com.kypaw.app', // Reemplazar con ID real
+      default: 'https://kypaw.com',
     });
     
     Linking.openURL(storeUrl).catch(() => {
@@ -272,7 +272,7 @@ Información del dispositivo:
         
         <List.Item
           title="Enviar correo de soporte"
-          description="soporte@llepa-app.com"
+          description="soporte@kypaw.com"
           left={(props) => <List.Icon {...props} icon="email" color={theme.colors.primary} />}
           right={(props) => <List.Icon {...props} icon="chevron-right" />}
           onPress={handleEmailSupport}
@@ -280,7 +280,7 @@ Información del dispositivo:
         <Divider />
         <List.Item
           title="Visitar nuestra web"
-          description="llepa-app.com"
+          description="kypaw.com"
           left={(props) => <List.Icon {...props} icon="web" color={theme.colors.primary} />}
           right={(props) => <List.Icon {...props} icon="open-in-new" />}
           onPress={handleOpenWebsite}
@@ -307,8 +307,8 @@ Información del dispositivo:
           left={(props) => <List.Icon {...props} icon="bug" color={theme.colors.error} />}
           right={(props) => <List.Icon {...props} icon="chevron-right" />}
           onPress={() => {
-            const email = 'bugs@llepa-app.com';
-            const subject = 'Reporte de bug - Llepa App';
+            const email = 'bugs@kypaw.com';
+            const subject = 'Reporte de bug - KyPaw';
             const body = `
 Descripción del problema:
 [Describe qué ocurre]
@@ -341,8 +341,8 @@ Información del dispositivo:
           left={(props) => <List.Icon {...props} icon="lightbulb-on" color={theme.colors.tertiary} />}
           right={(props) => <List.Icon {...props} icon="chevron-right" />}
           onPress={() => {
-            const email = 'ideas@llepa-app.com';
-            const subject = 'Sugerencia - Llepa App';
+            const email = 'ideas@kypaw.com';
+            const subject = 'Sugerencia - KyPaw';
             const body = `
 Mi sugerencia:
 [Describe tu idea]
