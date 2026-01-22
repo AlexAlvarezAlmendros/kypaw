@@ -6,8 +6,8 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 
-# App config (contiene configuración específica del entorno)
-app.json
+# Expo local state
+.expo/
 
 # Firebase config files (contienen credenciales)
 google-services.json
