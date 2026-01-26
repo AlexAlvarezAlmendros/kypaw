@@ -10,6 +10,7 @@ import { useTodayItems, useCalendarItems } from '../../hooks';
 import { ReminderItem, VisitItem, CalendarView } from '../../components/ui';
 import { Reminder, VetVisit, RootStackParamList } from '../../types';
 import { deleteReminder } from '../../services/reminderService';
+import { cancelNotificationsByReminderId } from '../../services/notificationService';
 import { useDialog } from '../../contexts/DialogContext';
 
 type TodayScreenProp = NativeStackNavigationProp<RootStackParamList>;
@@ -116,6 +117,9 @@ const TodayScreen = () => {
     if (!user) return;
     
     try {
+      // Primero cancelar las notificaciones asociadas
+      await cancelNotificationsByReminderId(reminderId);
+      // Luego eliminar el recordatorio de Firestore
       await deleteReminder(user.uid, reminderId);
       // Refrescar la lista después de eliminar
       if (viewMode === 'agenda') {

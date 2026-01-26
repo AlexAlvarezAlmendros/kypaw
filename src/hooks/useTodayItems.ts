@@ -1,9 +1,14 @@
 import { useState, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { Alert } from 'react-native';
-import { getUserReminders, updateReminder } from '../services/reminderService';
+import { getUserReminders, updateReminder, getReminder } from '../services/reminderService';
 import { getUserVisits } from '../services/vetVisitService';
 import { getUserPets } from '../services/petService';
+import { 
+  scheduleRecurringNotification, 
+  cancelNotificationsByReminderId,
+  calculateNextNotificationDate 
+} from '../services/notificationService';
 import { Reminder, VetVisit, Pet } from '../types';
 import { formatTime } from '../utils/dateUtils';
 
@@ -294,6 +299,28 @@ export const useTodayItems = (userId: string | undefined): UseTodayItemsResult =
 
       try {
         await updateReminder(userId!, actualReminderId, { completedDates: newCompletedDates });
+        
+        // Reprogramar la próxima notificación si se marcó como completado
+        if (newCompleted && reminderData.frequency) {
+          const originalDate = reminderData.scheduledAt.toDate();
+          const hour = originalDate.getHours();
+          const minute = originalDate.getMinutes();
+          
+          // Programar la próxima notificación
+          const newNotificationId = await scheduleRecurringNotification(
+            reminderData.title,
+            `Recordatorio para tu mascota`,
+            reminderData.frequency as any,
+            hour,
+            minute,
+            { reminderId: actualReminderId, petId: reminderData.petId }
+          );
+          
+          // Actualizar el notificationId en Firestore
+          if (newNotificationId) {
+            await updateReminder(userId!, actualReminderId, { notificationId: newNotificationId });
+          }
+        }
       } catch (error) {
         // Revertir en caso de error
         setItems(prevItems =>
@@ -317,6 +344,11 @@ export const useTodayItems = (userId: string | undefined): UseTodayItemsResult =
 
       try {
         await updateReminder(userId!, actualReminderId, { completed: newCompleted });
+        
+        // Si se completó, cancelar la notificación
+        if (newCompleted) {
+          await cancelNotificationsByReminderId(actualReminderId);
+        }
       } catch (error) {
         setItems(prevItems =>
           prevItems.map(i =>

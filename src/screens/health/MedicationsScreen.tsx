@@ -28,8 +28,8 @@ import {
   getMedicationFrequencyLabel,
   getMedicationTypeIcon,
 } from '../../services/medicationService';
-import { deleteReminder, getReminder } from '../../services/reminderService';
-import { cancelNotification } from '../../services/notificationService';
+import { deleteReminder } from '../../services/reminderService';
+import { cancelNotificationsByReminderId } from '../../services/notificationService';
 import { Medication, PetsStackParamList } from '../../types';
 import { useDialog } from '../../contexts/DialogContext';
 
@@ -88,11 +88,8 @@ const MedicationsScreen = () => {
           // Eliminar recordatorio y cancelar notificaciones asociadas
           if (medication.reminderId) {
             try {
-              // Obtener el recordatorio para cancelar la notificación
-              const reminder = await getReminder(user.uid, medication.reminderId);
-              if (reminder?.notificationId) {
-                await cancelNotification(reminder.notificationId);
-              }
+              // Cancelar todas las notificaciones del recordatorio
+              await cancelNotificationsByReminderId(medication.reminderId);
               await deleteReminder(user.uid, medication.reminderId);
             } catch (e) {
               console.log('Recordatorio ya eliminado o no existe');
@@ -119,11 +116,8 @@ const MedicationsScreen = () => {
           // Eliminar recordatorio y cancelar notificaciones asociadas
           if (medication.reminderId) {
             try {
-              // Obtener el recordatorio para cancelar la notificación
-              const reminder = await getReminder(user.uid, medication.reminderId);
-              if (reminder?.notificationId) {
-                await cancelNotification(reminder.notificationId);
-              }
+              // Cancelar todas las notificaciones del recordatorio
+              await cancelNotificationsByReminderId(medication.reminderId);
               await deleteReminder(user.uid, medication.reminderId);
             } catch (e) {
               console.log('Recordatorio ya eliminado o no existe');
