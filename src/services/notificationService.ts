@@ -124,85 +124,88 @@ const getChannelId = (type?: ReminderType): string => {
 
 /**
  * Calcular la próxima fecha de notificación según la frecuencia
+ * SIEMPRE devuelve una fecha en el FUTURO (mínimo el próximo ciclo)
+ * Nunca programa para "ahora mismo"
  */
 export const calculateNextNotificationDate = (
   baseDate: Date,
   frequency: string
 ): Date => {
   const now = new Date();
+  // Margen de 5 minutos mínimo para evitar notificaciones inmediatas
+  const minFuture = new Date(now.getTime() + 5 * 60 * 1000);
   let nextDate = new Date(baseDate);
   
-  // Asegurar que la fecha base tenga la hora correcta
   const hour = baseDate.getHours();
   const minute = baseDate.getMinutes();
   
   switch (frequency) {
     case 'ONCE':
-      // Para una vez, usar la fecha tal cual
+      // Para una vez, usar la fecha tal cual si es suficientemente futura
+      if (nextDate <= minFuture) {
+        // Si ya pasó o está muy cerca, no hay próxima (retorna fecha pasada para que no se programe)
+        return new Date(0);
+      }
       return nextDate;
       
     case 'EVERY_8_HOURS':
-      // Encontrar la próxima ocurrencia cada 8 horas
-      while (nextDate <= now) {
+      // Encontrar la próxima ocurrencia cada 8 horas (siempre en el futuro)
+      while (nextDate <= minFuture) {
         nextDate = new Date(nextDate.getTime() + 8 * 60 * 60 * 1000);
       }
       return nextDate;
       
     case 'EVERY_12_HOURS':
       // Encontrar la próxima ocurrencia cada 12 horas
-      while (nextDate <= now) {
+      while (nextDate <= minFuture) {
         nextDate = new Date(nextDate.getTime() + 12 * 60 * 60 * 1000);
       }
       return nextDate;
       
     case 'DAILY':
-      // Hoy a la hora especificada, o mañana si ya pasó
+      // Siempre programa para MAÑANA a la hora especificada
+      nextDate = new Date(now);
+      nextDate.setDate(nextDate.getDate() + 1);
       nextDate.setHours(hour, minute, 0, 0);
-      if (nextDate <= now) {
-        nextDate.setDate(nextDate.getDate() + 1);
-      }
       return nextDate;
       
     case 'EVERY_TWO_DAYS':
-      // Cada 2 días a la hora especificada
+      // Programar para dentro de 2 días a la hora especificada
+      nextDate = new Date(now);
+      nextDate.setDate(nextDate.getDate() + 2);
       nextDate.setHours(hour, minute, 0, 0);
-      while (nextDate <= now) {
-        nextDate.setDate(nextDate.getDate() + 2);
-      }
       return nextDate;
       
     case 'EVERY_THREE_DAYS':
-      // Cada 3 días a la hora especificada
+      // Programar para dentro de 3 días a la hora especificada
+      nextDate = new Date(now);
+      nextDate.setDate(nextDate.getDate() + 3);
       nextDate.setHours(hour, minute, 0, 0);
-      while (nextDate <= now) {
-        nextDate.setDate(nextDate.getDate() + 3);
-      }
       return nextDate;
       
     case 'WEEKLY':
-      // Mismo día de la semana a la hora especificada
+      // Programar para dentro de 7 días a la hora especificada
+      nextDate = new Date(now);
+      nextDate.setDate(nextDate.getDate() + 7);
       nextDate.setHours(hour, minute, 0, 0);
-      while (nextDate <= now) {
-        nextDate.setDate(nextDate.getDate() + 7);
-      }
       return nextDate;
       
     case 'MONTHLY':
-      // Mismo día del mes a la hora especificada
+      // Programar para el próximo mes a la hora especificada
+      nextDate = new Date(now);
+      nextDate.setMonth(nextDate.getMonth() + 1);
       nextDate.setHours(hour, minute, 0, 0);
-      while (nextDate <= now) {
-        nextDate.setMonth(nextDate.getMonth() + 1);
-      }
       return nextDate;
       
     default:
-      return nextDate;
+      return new Date(0); // Fecha inválida para no programar
   }
 };
 
 /**
  * Programar UNA SOLA notificación para un recordatorio
  * NO usa repeats - siempre programa una notificación única
+ * La notificación SOLO se mostrará cuando llegue la hora programada
  */
 export const scheduleNotification = async (
   title: string,
@@ -233,14 +236,18 @@ export const scheduleNotification = async (
       return null;
     }
     
-    // No programar si la fecha ya pasó
-    if (scheduledDate <= new Date()) {
-      console.log('[Notifications] Date is in the past, skipping');
+    // Asegurar que la fecha sea al menos 5 MINUTOS en el futuro
+    // Esto evita que se muestren notificaciones inmediatamente al crear/editar
+    const now = new Date();
+    const minFutureTime = new Date(now.getTime() + 5 * 60 * 1000); // 5 minutos mínimo
+    
+    if (scheduledDate <= minFutureTime) {
+      console.log('[Notifications] Date is too close (less than 5 min), skipping. Scheduled:', scheduledDate.toLocaleString());
       return null;
     }
     
     // Cancelar notificaciones anteriores del mismo reminderId
-    if (data?.reminderId) {
+    if (data?.reminderId && data.reminderId !== 'new') {
       await cancelNotificationsByReminderId(data.reminderId);
     }
     

@@ -890,3 +890,8 @@ android/app/build/tmp/kotlin-classes/release/com/alexalvarez/kypaw/MainActivity.
 android/app/build/tmp/kotlin-classes/release/com/alexalvarez/kypaw/MainActivity$createReactActivityDelegate$1.class
 android/app/build/tmp/kotlin-classes/release/com/alexalvarez/kypaw/MainApplication.class
 android/app/build/tmp/kotlin-classes/release/com/alexalvarez/kypaw/MainApplication$reactNativeHost$1.class
+android/app/src/main/res/drawable-hdpi/notification_icon.png
+android/app/src/main/res/drawable-mdpi/notification_icon.png
+android/app/src/main/res/drawable-xhdpi/notification_icon.png
+android/app/src/main/res/drawable-xxhdpi/notification_icon.png
+android/app/src/main/res/drawable-xxxhdpi/notification_icon.png
