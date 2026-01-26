@@ -67,7 +67,6 @@ Notifications.setNotificationHandler({
     }
     
     return {
-      shouldShowAlert: true,
       shouldPlaySound: preferences.sound,
       shouldSetBadge: true,
       shouldShowBanner: true,
@@ -206,6 +205,7 @@ export const calculateNextNotificationDate = (
  * Programar UNA SOLA notificación para un recordatorio
  * NO usa repeats - siempre programa una notificación única
  * La notificación SOLO se mostrará cuando llegue la hora programada
+ * Aplica el advanceMinutes configurado por tipo de recordatorio
  */
 export const scheduleNotification = async (
   title: string,
@@ -236,13 +236,24 @@ export const scheduleNotification = async (
       return null;
     }
     
-    // Asegurar que la fecha sea al menos 5 MINUTOS en el futuro
+    // Obtener minutos de anticipación según el tipo de recordatorio
+    let advanceMinutes = 0;
+    if (type && preferences.typePreferences[type]) {
+      advanceMinutes = preferences.typePreferences[type].advanceMinutes || 0;
+    }
+    
+    // Calcular la fecha de notificación (restando los minutos de anticipación)
+    const notificationDate = new Date(scheduledDate.getTime() - advanceMinutes * 60 * 1000);
+    
+    // Asegurar que la fecha sea al menos 1 MINUTO en el futuro
     // Esto evita que se muestren notificaciones inmediatamente al crear/editar
     const now = new Date();
-    const minFutureTime = new Date(now.getTime() + 5 * 60 * 1000); // 5 minutos mínimo
+    const minFutureTime = new Date(now.getTime() + 60 * 1000); // 1 minuto mínimo
     
-    if (scheduledDate <= minFutureTime) {
-      console.log('[Notifications] Date is too close (less than 5 min), skipping. Scheduled:', scheduledDate.toLocaleString());
+    if (notificationDate <= minFutureTime) {
+      console.log('[Notifications] Date is too close (less than 1 min), skipping.');
+      console.log(`[Notifications]    → Reminder at: ${scheduledDate.toLocaleString()}`);
+      console.log(`[Notifications]    → Would notify at: ${notificationDate.toLocaleString()} (${advanceMinutes}min before)`);
       return null;
     }
     
@@ -253,25 +264,51 @@ export const scheduleNotification = async (
     
     const channelId = getChannelId(type);
     
-    // Programar UNA notificación con fecha específica (sin repeats)
+    // Calcular segundos hasta la notificación
+    const secondsUntilNotification = Math.floor((notificationDate.getTime() - now.getTime()) / 1000);
+    
+    const hours = Math.floor(secondsUntilNotification / 3600);
+    const minutes = Math.floor((secondsUntilNotification % 3600) / 60);
+    console.log(`[Notifications] ⏰ Programming "${title}"`);
+    console.log(`[Notifications]    → Reminder scheduled for: ${scheduledDate.toLocaleString()}`);
+    console.log(`[Notifications]    → Advance: ${advanceMinutes} min before`);
+    console.log(`[Notifications]    → Will notify at: ${notificationDate.toLocaleString()}`);
+    console.log(`[Notifications]    → In: ${hours}h ${minutes}m (${secondsUntilNotification}s)`);
+    console.log(`[Notifications]    → Channel: ${channelId}`);
+    
+    // Preparar el body con info de anticipación si aplica
+    let notificationBody = body;
+    if (advanceMinutes > 0) {
+      notificationBody = `${body} (en ${advanceMinutes} min)`;
+    }
+    
+    // Programar UNA notificación usando trigger con type explícito
+    // El type es OBLIGATORIO en versiones recientes de expo-notifications
     const notificationId = await Notifications.scheduleNotificationAsync({
       content: {
         title,
-        body,
+        body: notificationBody,
         data: {
           ...data,
           scheduledAt: scheduledDate.toISOString(),
+          notifyAt: notificationDate.toISOString(),
+          advanceMinutes,
         },
         sound: preferences.sound,
         badge: 1,
       },
       trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DATE,
+        date: notificationDate,
         channelId,
-        date: scheduledDate,
       },
     });
 
-    console.log(`[Notifications] Scheduled: "${title}" for ${scheduledDate.toLocaleString()} (ID: ${notificationId})`);
+    console.log(`[Notifications] ✅ Scheduled OK (ID: ${notificationId})`);
+    
+    // Debug: Listar todas las notificaciones después de programar
+    const allScheduled = await Notifications.getAllScheduledNotificationsAsync();
+    console.log(`[Notifications] 📋 Total scheduled now: ${allScheduled.length}`);
     return notificationId;
   } catch (error: any) {
     console.error('[Notifications] Error scheduling:', error);
@@ -415,7 +452,13 @@ export const initializeNotificationListeners = (
   // Escuchar notificaciones en primer plano (solo para logging)
   notificationReceivedSubscription = Notifications.addNotificationReceivedListener(
     (notification) => {
-      console.log('[Notifications] Received:', notification.request.content.title);
+      const data = notification.request.content.data;
+      const scheduledAt = data?.scheduledAt;
+      console.log('[Notifications] 🔔 RECEIVED in foreground:');
+      console.log(`[Notifications]    → Title: ${notification.request.content.title}`);
+      console.log(`[Notifications]    → ID: ${notification.request.identifier}`);
+      console.log(`[Notifications]    → Was scheduled for: ${scheduledAt || 'unknown'}`);
+      console.log(`[Notifications]    → Received at: ${new Date().toLocaleString()}`);
       // NO reprogramamos automáticamente aquí
       // La reprogramación se hace cuando el usuario completa el recordatorio
     }

@@ -224,7 +224,7 @@ export default function AddReminderScreen() {
           title,
           `Recordatorio para ${petName}`,
           selectedDate,
-          { reminderId: reminderId || 'new', petId: selectedPetId }
+          { reminderId: reminderId || 'new', petId: selectedPetId, reminderType: type, petName }
         );
       } else {
         newNotificationId = await scheduleRecurringNotification(
@@ -233,7 +233,7 @@ export default function AddReminderScreen() {
           frequency,
           selectedDate.getHours(),
           selectedDate.getMinutes(),
-          { reminderId: reminderId || 'new', petId: selectedPetId }
+          { reminderId: reminderId || 'new', petId: selectedPetId, reminderType: type, petName }
         );
       }
 
