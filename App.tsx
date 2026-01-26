@@ -10,6 +10,7 @@ import { useAuthStore } from './src/store/authStore';
 import { lightTheme, darkTheme } from './src/config/paperTheme';
 import { useAppColorScheme } from './src/hooks/useColorScheme';
 import { initializeNotificationListeners, cleanupNotificationListeners } from './src/services/notificationService';
+import { initializePermissions } from './src/services/permissionsService';
 import { DialogProvider } from './src/contexts/DialogContext';
 import AppNavigator from './src/navigation/AppNavigator';
 
@@ -47,6 +48,20 @@ export default function App() {
     return () => {
       cleanupNotificationListeners();
     };
+  }, []);
+
+  // Solicitar todos los permisos al inicio de la app
+  useEffect(() => {
+    const requestPermissions = async () => {
+      try {
+        const status = await initializePermissions();
+        console.log('📱 Estado de permisos:', status);
+      } catch (error) {
+        console.error('Error solicitando permisos:', error);
+      }
+    };
+
+    requestPermissions();
   }, []);
 
   return (
