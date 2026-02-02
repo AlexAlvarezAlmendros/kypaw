@@ -59,26 +59,6 @@ const SEVERITY_BUTTONS = [
   { value: 'HIGH', label: 'Grave' },
 ];
 
-const COMMON_SYMPTOMS: Record<IncidentCategory, string[]> = {
-  DIGESTIVE: ['Vómitos', 'Diarrea', 'No come', 'Estreñimiento', 'Gases', 'Babeo excesivo'],
-  MOBILITY: ['Cojera', 'Rigidez', 'No salta', 'Se queja al moverse', 'No quiere pasear'],
-  SKIN: ['Rascado excesivo', 'Pérdida de pelo', 'Enrojecimiento', 'Bultos', 'Caspa', 'Heridas'],
-  RESPIRATORY: ['Tos', 'Estornudos', 'Dificultad respirar', 'Ruidos al respirar', 'Moqueo'],
-  BEHAVIOR: ['Apatía', 'Ansiedad', 'Agresividad', 'No duerme', 'Exceso de sed', 'Desorientación'],
-  INJURY: ['Herida abierta', 'Cojera súbita', 'Hinchazón', 'Sangrado', 'Dolor al tocar'],
-  OTHER: ['Fiebre', 'Temblores', 'Ojos rojos', 'Mal aliento', 'Cambio de peso'],
-};
-
-const QUICK_TITLES: Record<IncidentCategory, string[]> = {
-  DIGESTIVE: ['Ha vomitado', 'Tiene diarrea', 'No quiere comer', 'Problemas estomacales'],
-  MOBILITY: ['Cojea un poco', 'Le cuesta levantarse', 'No quiere pasear'],
-  SKIN: ['Se rasca mucho', 'Tiene una calva', 'Tiene un bulto'],
-  RESPIRATORY: ['Tose mucho', 'Tiene mocos', 'Respira raro'],
-  BEHAVIOR: ['Está muy apático', 'Está nervioso', 'Actúa raro'],
-  INJURY: ['Se ha hecho una herida', 'Se ha golpeado', 'Tiene dolor'],
-  OTHER: ['Algo no está bien', 'Comportamiento inusual'],
-};
-
 const AddIncidentScreen = () => {
   const theme = useTheme();
   const route = useRoute<AddIncidentRouteProp>();
@@ -92,9 +72,15 @@ const AddIncidentScreen = () => {
   const pet = pets.find((p) => p.id === petId);
   const isEditing = !!incidentId;
 
+  console.log('[AddIncident] 🎬 Componente inicializado');
+  console.log('[AddIncident] PetId:', petId);
+  console.log('[AddIncident] Pet encontrada:', pet?.name);
+  console.log('[AddIncident] IncidentId:', incidentId);
+  console.log('[AddIncident] IsEditing:', isEditing);
+  console.log('[AddIncident] User:', user?.uid);
+
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(isEditing);
-  const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [existingPhotoUrl, setExistingPhotoUrl] = useState<string | null>(null);
 
@@ -102,7 +88,6 @@ const AddIncidentScreen = () => {
     control,
     handleSubmit,
     setValue,
-    watch,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -116,46 +101,51 @@ const AddIncidentScreen = () => {
     },
   });
 
-  const selectedCategory = watch('category') as IncidentCategory;
-
   useEffect(() => {
     if (isEditing && user) {
+      console.log('[AddIncident] 🔵 Iniciando carga de incidente para editar');
+      console.log('[AddIncident] IncidentId:', incidentId);
       loadIncident();
+    } else {
+      console.log('[AddIncident] ➕ Modo creación (no carga incidente)');
     }
   }, [isEditing, user]);
 
   const loadIncident = async () => {
-    if (!user || !incidentId) return;
+    console.log('[AddIncident] 📥 Cargando incidente...');
+    if (!user || !incidentId) {
+      console.error('[AddIncident] ❌ No hay user o incidentId');
+      return;
+    }
+    
     try {
       const incident = await getIncident(user.uid, petId, incidentId);
+      console.log('[AddIncident] Incidente cargado:', incident);
+      
       if (incident) {
         setValue('date', incident.date.toDate());
         setValue('category', incident.category);
         setValue('severity', incident.severity);
         setValue('title', incident.title);
         setValue('description', incident.description || '');
-        setSelectedSymptoms(incident.symptoms || []);
         if (incident.photoUrl) {
           setExistingPhotoUrl(incident.photoUrl);
         }
+        console.log('[AddIncident] ✅ Valores del formulario establecidos');
+      } else {
+        console.error('[AddIncident] ❌ No se encontró el incidente');
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('[AddIncident] ❌ Error cargando incidente:', error);
+      console.error('[AddIncident] Error stack:', error?.stack);
       showError('Error', 'No se pudo cargar el incidente');
       navigation.goBack();
     } finally {
       setInitialLoading(false);
+      console.log('[AddIncident] 🏁 Finalizada carga de incidente');
     }
   };
 
-  const toggleSymptom = (symptom: string) => {
-    setSelectedSymptoms((prev) =>
-      prev.includes(symptom)
-        ? prev.filter((s) => s !== symptom)
-        : [...prev, symptom]
-    );
-  };
-
-  // Sincronizar con el hook de imagePicker
   useEffect(() => {
     if (pickedImageUri) {
       setPhotoUri(pickedImageUri);
@@ -172,18 +162,32 @@ const AddIncidentScreen = () => {
   };
 
   const onSubmit = async (data: FormData) => {
-    if (!user) return;
+    console.log('[AddIncident] 🔵 Iniciando onSubmit');
+    console.log('[AddIncident] Data recibida:', data);
+    console.log('[AddIncident] User:', user?.uid);
+    console.log('[AddIncident] PetId:', petId);
+    console.log('[AddIncident] IsEditing:', isEditing);
+    console.log('[AddIncident] IncidentId:', incidentId);
+    
+    if (!user) {
+      console.error('[AddIncident] ❌ No hay usuario autenticado');
+      return;
+    }
 
     setLoading(true);
     try {
       let photoUrl = existingPhotoUrl || undefined;
+      console.log('[AddIncident] PhotoUri:', photoUri);
+      console.log('[AddIncident] ExistingPhotoUrl:', existingPhotoUrl);
 
       // Subir foto a imgbb si hay una nueva
       if (photoUri) {
+        console.log('[AddIncident] 📷 Subiendo foto...');
         try {
           photoUrl = await uploadImageToImgbb(photoUri, generateImageName('incident'));
+          console.log('[AddIncident] ✅ Foto subida:', photoUrl);
         } catch (uploadError) {
-          console.error('Error subiendo imagen:', uploadError);
+          console.error('[AddIncident] ❌ Error subiendo imagen:', uploadError);
           // Continuar sin foto si falla la subida
         }
       }
@@ -194,22 +198,33 @@ const AddIncidentScreen = () => {
         severity: data.severity as IncidentSeverity,
         title: data.title,
         description: data.description,
-        symptoms: selectedSymptoms.length > 0 ? selectedSymptoms : undefined,
         resolved: false,
         photoUrl,
       };
+      
+      console.log('[AddIncident] 📝 Datos del incidente a guardar:', incidentData);
 
       if (isEditing && incidentId) {
+        console.log('[AddIncident] 🔄 Actualizando incidente existente...');
         await updateIncident(user.uid, petId, incidentId, incidentData);
+        console.log('[AddIncident] ✅ Incidente actualizado correctamente');
         showSuccess('Actualizado', 'El incidente se ha actualizado correctamente');
       } else {
-        await createIncident(user.uid, petId, incidentData);
+        console.log('[AddIncident] ➕ Creando nuevo incidente...');
+        const newIncident = await createIncident(user.uid, petId, incidentData);
+        console.log('[AddIncident] ✅ Incidente creado con ID:', newIncident.id);
         showSuccess('Registrado', 'El incidente se ha registrado. ¡Esperamos que se mejore pronto!');
       }
+      
+      console.log('[AddIncident] 🔙 Navegando hacia atrás...');
       navigation.goBack();
-    } catch (error) {
+    } catch (error: any) {
+      console.error('[AddIncident] ❌ Error en onSubmit:', error);
+      console.error('[AddIncident] Error stack:', error?.stack);
+      console.error('[AddIncident] Error message:', error?.message);
       showError('Error', isEditing ? 'No se pudo actualizar' : 'No se pudo registrar');
     } finally {
+      console.log('[AddIncident] 🏁 Finalizando onSubmit');
       setLoading(false);
     }
   };
@@ -223,7 +238,8 @@ const AddIncidentScreen = () => {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 88 : 0}
     >
       <ScrollView
         style={[styles.scrollView, { backgroundColor: theme.colors.background }]}
@@ -239,12 +255,21 @@ const AddIncidentScreen = () => {
             control={control}
             name="date"
             render={({ field: { value, onChange } }) => (
-              <DatePickerField
-                label="Fecha"
-                value={value}
-                onChange={onChange}
-                mode="datetime"
-              />
+              <View>
+                <DatePickerField
+                  label="Fecha"
+                  value={value}
+                  onChange={onChange}
+                  mode="date"
+                />
+                <View style={{ height: 8 }} />
+                <DatePickerField
+                  label="Hora"
+                  value={value}
+                  onChange={onChange}
+                  mode="time"
+                />
+              </View>
             )}
           />
         </Card>
@@ -261,10 +286,7 @@ const AddIncidentScreen = () => {
               <TypeSelector
                 items={CATEGORY_OPTIONS}
                 value={value}
-                onValueChange={(newValue: IncidentCategory) => {
-                  onChange(newValue);
-                  setSelectedSymptoms([]); // Limpiar síntomas al cambiar categoría
-                }}
+                onValueChange={onChange}
                 columns={2}
               />
             )}
@@ -308,43 +330,6 @@ const AddIncidentScreen = () => {
               />
             )}
           />
-          
-          {/* Sugerencias rápidas */}
-          <Text style={[styles.suggestionsLabel, { color: theme.colors.onSurfaceVariant }]}>
-            Sugerencias:
-          </Text>
-          <View style={styles.suggestionsRow}>
-            {QUICK_TITLES[selectedCategory].map((title) => (
-              <Button
-                key={title}
-                mode="outlined"
-                onPress={() => setValue('title', title)}
-                style={styles.suggestionChip}
-              >
-                {title}
-              </Button>
-            ))}
-          </View>
-        </Card>
-
-        {/* Síntomas */}
-        <Card style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
-            Síntomas observados
-          </Text>
-          <View style={styles.symptomsGrid}>
-            {COMMON_SYMPTOMS[selectedCategory].map((symptom) => (
-              <Chip
-                key={symptom}
-                mode={selectedSymptoms.includes(symptom) ? 'flat' : 'outlined'}
-                selected={selectedSymptoms.includes(symptom)}
-                onPress={() => toggleSymptom(symptom)}
-                style={styles.symptomChip}
-              >
-                {symptom}
-              </Chip>
-            ))}
-          </View>
         </Card>
 
         {/* Descripción */}
@@ -499,6 +484,7 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     marginTop: spacing.md,
+    marginBottom: spacing.md,
   },
 });
 

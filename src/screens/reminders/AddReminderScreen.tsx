@@ -50,7 +50,7 @@ type AddReminderRouteProp = RouteProp<RootStackParamList, 'AddReminder'>;
 const REMINDER_TYPES: { value: ReminderType; label: string; icon: string }[] = [
   { value: 'HYGIENE', label: 'Higiene', icon: 'shower' },
   { value: 'GROOMING', label: 'Peluquería', icon: 'content-cut' },
-  { value: 'FOOD', label: 'Alimentación', icon: 'food-drumstick' },
+  { value: 'FOOD', label: 'Alimentación', icon: 'bowl' },
   { value: 'WALK', label: 'Paseo', icon: 'walk' },
   { value: 'TRAINING', label: 'Entrenamiento', icon: 'dog-side' },
   { value: 'OTHER', label: 'Otros', icon: 'dots-horizontal' },
@@ -149,28 +149,63 @@ export default function AddReminderScreen() {
   };
 
   const handleDateChange = (event: any, date?: Date) => {
-    setShowDatePicker(Platform.OS === 'ios');
-    if (date) {
-      setSelectedDate((prev) => {
-        const newDate = new Date(prev);
-        newDate.setFullYear(date.getFullYear());
-        newDate.setMonth(date.getMonth());
-        newDate.setDate(date.getDate());
-        return newDate;
-      });
-    }
+    // Usar setTimeout para asegurar cierre correcto del modal en Android
+    setTimeout(() => {
+      setShowDatePicker(false);
+      
+      if (Platform.OS === 'android') {
+        // Solo actualizar si el usuario seleccionó (no canceló)
+        if (event.type === 'set' && date) {
+          setSelectedDate((prev) => {
+            const newDate = new Date(prev);
+            newDate.setFullYear(date.getFullYear());
+            newDate.setMonth(date.getMonth());
+            newDate.setDate(date.getDate());
+            return newDate;
+          });
+        }
+      } else {
+        // iOS
+        if (date && event.type !== 'dismissed') {
+          setSelectedDate((prev) => {
+            const newDate = new Date(prev);
+            newDate.setFullYear(date.getFullYear());
+            newDate.setMonth(date.getMonth());
+            newDate.setDate(date.getDate());
+            return newDate;
+          });
+        }
+      }
+    }, 100);
   };
 
   const handleTimeChange = (event: any, time?: Date) => {
-    setShowTimePicker(Platform.OS === 'ios');
-    if (time) {
-      setSelectedDate((prev) => {
-        const newDate = new Date(prev);
-        newDate.setHours(time.getHours());
-        newDate.setMinutes(time.getMinutes());
-        return newDate;
-      });
-    }
+    // Usar setTimeout para asegurar cierre correcto del modal en Android
+    setTimeout(() => {
+      setShowTimePicker(false);
+      
+      if (Platform.OS === 'android') {
+        // Solo actualizar si el usuario seleccionó (no canceló)
+        if (event.type === 'set' && time) {
+          setSelectedDate((prev) => {
+            const newDate = new Date(prev);
+            newDate.setHours(time.getHours());
+            newDate.setMinutes(time.getMinutes());
+            return newDate;
+          });
+        }
+      } else {
+        // iOS
+        if (time && event.type !== 'dismissed') {
+          setSelectedDate((prev) => {
+            const newDate = new Date(prev);
+            newDate.setHours(time.getHours());
+            newDate.setMinutes(time.getMinutes());
+            return newDate;
+          });
+        }
+      }
+    }, 100);
   };
 
   const handleSave = async () => {

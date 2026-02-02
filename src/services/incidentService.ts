@@ -79,7 +79,12 @@ export const createIncident = async (
     updatedAt: now,
   };
 
-  const id = await createPetSubcollectionDoc(userId, petId, COLLECTION_NAME, dataToCreate);
+  // Filtrar campos undefined que Firestore no acepta
+  const cleanData = Object.fromEntries(
+    Object.entries(dataToCreate).filter(([_, value]) => value !== undefined)
+  );
+
+  const id = await createPetSubcollectionDoc(userId, petId, COLLECTION_NAME, cleanData);
 
   logger.success('✅ Incidente registrado', { incidentId: id });
 
@@ -98,10 +103,17 @@ export const updateIncident = async (
 ): Promise<void> => {
   logger.info('⚠️ Actualizando incidente', { userId, petId, incidentId });
 
-  await updatePetSubcollectionDoc(userId, petId, COLLECTION_NAME, incidentId, {
+  const dataToUpdate = {
     ...updates,
     updatedAt: Timestamp.now(),
-  });
+  };
+
+  // Filtrar campos undefined que Firestore no acepta
+  const cleanData = Object.fromEntries(
+    Object.entries(dataToUpdate).filter(([_, value]) => value !== undefined)
+  );
+
+  await updatePetSubcollectionDoc(userId, petId, COLLECTION_NAME, incidentId, cleanData);
 
   logger.success('✅ Incidente actualizado');
 };
@@ -117,13 +129,20 @@ export const resolveIncident = async (
   logger.info('⚠️ Marcando incidente como resuelto', { userId, petId, incidentId });
 
   const now = Timestamp.now();
-  await updatePetSubcollectionDoc(userId, petId, COLLECTION_NAME, incidentId, {
+  const dataToUpdate = {
     resolved: true,
     resolvedAt: now,
     resolvedNotes,
     vetVisitId,
     updatedAt: now,
-  });
+  };
+
+  // Filtrar campos undefined que Firestore no acepta
+  const cleanData = Object.fromEntries(
+    Object.entries(dataToUpdate).filter(([_, value]) => value !== undefined)
+  );
+
+  await updatePetSubcollectionDoc(userId, petId, COLLECTION_NAME, incidentId, cleanData);
 
   logger.success('✅ Incidente marcado como resuelto');
 };

@@ -121,13 +121,28 @@ const AddVisitScreen = () => {
   };
 
   const handleTimeChange = (event: any, time?: Date) => {
-    setShowTimePicker(Platform.OS === 'ios');
-    if (time) {
-      const newDate = new Date(selectedDate);
-      newDate.setHours(time.getHours());
-      newDate.setMinutes(time.getMinutes());
-      setValue('date', newDate);
-    }
+    // Usar setTimeout para asegurar cierre correcto del modal en Android
+    setTimeout(() => {
+      setShowTimePicker(false);
+      
+      if (Platform.OS === 'android') {
+        // Solo actualizar si el usuario seleccionó (no canceló)
+        if (event.type === 'set' && time) {
+          const newDate = new Date(selectedDate);
+          newDate.setHours(time.getHours());
+          newDate.setMinutes(time.getMinutes());
+          setValue('date', newDate);
+        }
+      } else {
+        // iOS
+        if (time && event.type !== 'dismissed') {
+          const newDate = new Date(selectedDate);
+          newDate.setHours(time.getHours());
+          newDate.setMinutes(time.getMinutes());
+          setValue('date', newDate);
+        }
+      }
+    }, 100);
   };
 
   const formatTime = (date: Date) => {
@@ -288,10 +303,22 @@ const AddVisitScreen = () => {
             mode="date"
             display="default"
             onChange={(event, date) => {
-              setShowDatePicker(Platform.OS === 'ios');
-              if (date) {
-                setValue('date', date);
-              }
+              // Usar setTimeout para asegurar cierre correcto del modal en Android
+              setTimeout(() => {
+                setShowDatePicker(false);
+                
+                if (Platform.OS === 'android') {
+                  // Solo actualizar si el usuario seleccionó (no canceló)
+                  if (event.type === 'set' && date) {
+                    setValue('date', date);
+                  }
+                } else {
+                  // iOS
+                  if (date && event.type !== 'dismissed') {
+                    setValue('date', date);
+                  }
+                }
+              }, 100);
             }}
           />
         )}

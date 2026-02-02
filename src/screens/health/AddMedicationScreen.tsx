@@ -137,25 +137,57 @@ export default function AddMedicationScreen() {
   };
 
   const handleDateChange = (event: any, date?: Date) => {
-    setShowDatePicker(Platform.OS === 'ios');
-    if (date) {
-      setStartDate((prev) => {
-        const newDate = new Date(prev);
-        newDate.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
-        return newDate;
-      });
-    }
+    // Usar setTimeout para asegurar cierre correcto del modal en Android
+    setTimeout(() => {
+      setShowDatePicker(false);
+      
+      if (Platform.OS === 'android') {
+        // Solo actualizar si el usuario seleccionó (no canceló)
+        if (event.type === 'set' && date) {
+          setStartDate((prev) => {
+            const newDate = new Date(prev);
+            newDate.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
+            return newDate;
+          });
+        }
+      } else {
+        // iOS
+        if (date && event.type !== 'dismissed') {
+          setStartDate((prev) => {
+            const newDate = new Date(prev);
+            newDate.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
+            return newDate;
+          });
+        }
+      }
+    }, 100);
   };
 
   const handleTimeChange = (event: any, date?: Date) => {
-    setShowTimePicker(Platform.OS === 'ios');
-    if (date) {
-      setStartDate((prev) => {
-        const newDate = new Date(prev);
-        newDate.setHours(date.getHours(), date.getMinutes());
-        return newDate;
-      });
-    }
+    // Usar setTimeout para asegurar cierre correcto del modal en Android
+    setTimeout(() => {
+      setShowTimePicker(false);
+      
+      if (Platform.OS === 'android') {
+        // Solo actualizar si el usuario seleccionó (no canceló)
+        if (event.type === 'set' && date) {
+          setStartDate((prev) => {
+            const newDate = new Date(prev);
+            newDate.setHours(date.getHours(), date.getMinutes());
+            return newDate;
+          });
+        }
+      } else {
+        // iOS
+        if (date && event.type !== 'dismissed') {
+          setStartDate((prev) => {
+            const newDate = new Date(prev);
+            newDate.setHours(date.getHours(), date.getMinutes());
+            return newDate;
+          });
+        }
+      }
+    }, 100);
   };
 
   const validateForm = (): boolean => {

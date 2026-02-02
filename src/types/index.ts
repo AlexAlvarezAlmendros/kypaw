@@ -230,6 +230,7 @@ export type SettingsStackParamList = {
   NotificationSettings: undefined;
   HelpSupport: undefined;
   PrivacyPolicy: undefined;
+  NotificationsDebug: undefined;
 };
 
 export type PetsStackParamList = {

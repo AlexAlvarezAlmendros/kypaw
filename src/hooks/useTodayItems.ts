@@ -296,11 +296,23 @@ export const useTodayItems = (userId: string | undefined): UseTodayItemsResult =
       try {
         await updateReminder(userId!, actualReminderId, { completedDates: newCompletedDates });
         
-        // Para recordatorios recurrentes, cancelamos la notificación actual
-        // La próxima notificación se programará cuando el usuario vuelva a abrir la app
-        // o cuando se cree/edite el recordatorio
+        // Para recordatorios recurrentes, reprogramar la notificación para el próximo ciclo
         if (newCompleted) {
-          await cancelNotificationsByReminderId(actualReminderId);
+          const { rescheduleRecurringNotification } = await import('../services/notificationService');
+          const { getUserPets } = await import('../services/petService');
+          
+          // Obtener el nombre de la mascota para la notificación
+          const pets = await getUserPets(userId!);
+          const pet = pets.find(p => p.id === reminderData.petId);
+          const petName = pet?.name || 'tu mascota';
+          
+          // Reprogramar la notificación para el siguiente ciclo
+          const newNotificationId = await rescheduleRecurringNotification(reminderData, petName);
+          
+          // Actualizar el notificationId en Firestore si se reprogramó exitosamente
+          if (newNotificationId) {
+            await updateReminder(userId!, actualReminderId, { notificationId: newNotificationId });
+          }
         }
       } catch (error) {
         // Revertir en caso de error
@@ -373,7 +385,7 @@ const getReminderIcon = (type: string): string => {
     case 'GROOMING':
       return 'content-cut';
     case 'FOOD':
-      return 'food';
+      return 'bowl';
     case 'WALK':
       return 'walk';
     case 'TRAINING':

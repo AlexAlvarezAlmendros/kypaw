@@ -310,10 +310,22 @@ const EditPetScreen = () => {
   };
 
   const onDateChange = (event: any, selectedDate?: Date) => {
-    setShowDatePicker(false);
-    if (selectedDate) {
-      setValue('birthDate', selectedDate);
-    }
+    // Usar setTimeout para asegurar cierre correcto del modal en Android
+    setTimeout(() => {
+      setShowDatePicker(false);
+      
+      // En Android, verificar que el usuario seleccionó (no canceló)
+      if (Platform.OS === 'android') {
+        if (event.type === 'set' && selectedDate) {
+          setValue('birthDate', selectedDate);
+        }
+      } else {
+        // En iOS, verificar que no canceló
+        if (selectedDate && event.type !== 'dismissed') {
+          setValue('birthDate', selectedDate);
+        }
+      }
+    }, 100);
   };
 
   const handleDelete = () => {
@@ -472,6 +484,16 @@ const EditPetScreen = () => {
                 label="Peso (kg)"
                 value={value?.toString() || ''}
                 onChangeText={(text) => {
+                  // Permitir campo vacío
+                  if (text === '' || text === undefined) {
+                    onChange(undefined);
+                    return;
+                  }
+                  // Permitir punto decimal al final para facilitar escritura
+                  if (text.endsWith('.')) {
+                    onChange(text);
+                    return;
+                  }
                   const num = parseFloat(text);
                   onChange(isNaN(num) ? undefined : num);
                 }}

@@ -9,6 +9,7 @@ import ChangePasswordScreen from '../screens/settings/ChangePasswordScreen';
 import NotificationSettingsScreen from '../screens/settings/NotificationSettingsScreen';
 import HelpSupportScreen from '../screens/settings/HelpSupportScreen';
 import PrivacyPolicyScreen from '../screens/settings/PrivacyPolicyScreen';
+import NotificationsDebugScreen from '../screens/debug/NotificationsDebugScreen';
 
 const Stack = createNativeStackNavigator<SettingsStackParamList>();
 
@@ -68,6 +69,14 @@ const SettingsNavigator = () => {
         component={PrivacyPolicyScreen}
         options={{ 
           title: 'Privacidad',
+          headerShown: true,
+        }}
+      />
+      <Stack.Screen
+        name="NotificationsDebug"
+        component={NotificationsDebugScreen}
+        options={{ 
+          title: 'Debug de Notificaciones',
           headerShown: true,
         }}
       />

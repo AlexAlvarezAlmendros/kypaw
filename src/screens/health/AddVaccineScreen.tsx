@@ -163,10 +163,22 @@ const AddVaccineScreen = () => {
             mode="date"
             display="default"
             onChange={(event, date) => {
-              setShowAdministeredPicker(Platform.OS === 'ios');
-              if (date) {
-                setValue('administeredDate', date);
-              }
+              // Usar setTimeout para asegurar cierre correcto del modal en Android
+              setTimeout(() => {
+                setShowAdministeredPicker(false);
+                
+                if (Platform.OS === 'android') {
+                  // Solo actualizar si el usuario seleccionó (no canceló)
+                  if (event.type === 'set' && date) {
+                    setValue('administeredDate', date);
+                  }
+                } else {
+                  // iOS
+                  if (date && event.type !== 'dismissed') {
+                    setValue('administeredDate', date);
+                  }
+                }
+              }, 100);
             }}
           />
         )}
@@ -221,10 +233,22 @@ const AddVaccineScreen = () => {
               display="default"
               minimumDate={administeredDate}
               onChange={(event, date) => {
-                setShowNextDosePicker(Platform.OS === 'ios');
-                if (date) {
-                  setValue('nextDoseDate', date);
-                }
+                // Usar setTimeout para asegurar cierre correcto del modal en Android
+                setTimeout(() => {
+                  setShowNextDosePicker(false);
+                  
+                  if (Platform.OS === 'android') {
+                    // Solo actualizar si el usuario seleccionó (no canceló)
+                    if (event.type === 'set' && date) {
+                      setValue('nextDoseDate', date);
+                    }
+                  } else {
+                    // iOS
+                    if (date && event.type !== 'dismissed') {
+                      setValue('nextDoseDate', date);
+                    }
+                  }
+                }, 100);
               }}
             />
           )}

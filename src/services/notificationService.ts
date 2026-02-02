@@ -572,6 +572,138 @@ export const getNotificationStats = async (): Promise<{
 };
 
 /**
+ * Reprogramar notificación para recordatorio recurrente
+ * Esta función programa la PRÓXIMA notificación basándose en la frecuencia
+ */
+export const rescheduleRecurringNotification = async (
+  reminder: any, // Reminder pero con tipos flexibles
+  petName: string
+): Promise<string | null> => {
+  try {
+    // Verificar si es recurrente
+    if (!reminder.frequency || reminder.frequency === 'ONCE') {
+      console.log('[Notifications] Not a recurring reminder, skipping reschedule');
+      return null;
+    }
+
+    // Cancelar notificaciones anteriores
+    await cancelNotificationsByReminderId(reminder.id);
+
+    // Obtener la fecha original del recordatorio
+    const originalDate = reminder.scheduledAt?.toDate ? reminder.scheduledAt.toDate() : new Date(reminder.scheduledAt);
+    
+    // Calcular la próxima fecha según la frecuencia
+    const nextDate = calculateNextNotificationDate(originalDate, reminder.frequency);
+    
+    // Verificar que la fecha sea válida (no en el pasado muy lejano)
+    if (nextDate.getTime() < 100000) {
+      console.log('[Notifications] Invalid next date, not rescheduling');
+      return null;
+    }
+
+    // Programar la notificación
+    const notificationId = await scheduleNotification(
+      reminder.title,
+      `Recordatorio para ${petName}`,
+      nextDate,
+      {
+        reminderId: reminder.id,
+        petId: reminder.petId,
+        reminderType: reminder.type,
+        petName,
+        frequency: reminder.frequency,
+      }
+    );
+
+    console.log(`[Notifications] ✅ Rescheduled recurring reminder "${reminder.title}" for ${nextDate.toLocaleString()}`);
+    return notificationId;
+  } catch (error) {
+    console.error('[Notifications] Error rescheduling recurring notification:', error);
+    return null;
+  }
+};
+
+/**
+ * Sincronizar todas las notificaciones de recordatorios activos
+ * Esta función debe llamarse al inicio de la app para asegurar que todos
+ * los recordatorios recurrentes tienen notificaciones programadas
+ */
+export const syncAllNotifications = async (userId: string): Promise<void> => {
+  try {
+    console.log('[Notifications] 🔄 Syncing all notifications...');
+    
+    // Importar dinámicamente para evitar ciclo de dependencias
+    const { getUserReminders } = await import('./reminderService');
+    const { getUserPets } = await import('./petService');
+    
+    const [reminders, pets] = await Promise.all([
+      getUserReminders(userId),
+      getUserPets(userId),
+    ]);
+
+    const petsMap = new Map(pets.map(pet => [pet.id, pet]));
+    let syncedCount = 0;
+    let skippedCount = 0;
+
+    // Procesar cada recordatorio
+    for (const reminder of reminders) {
+      // Saltar recordatorios completados o sin frecuencia
+      if (reminder.completed && (!reminder.frequency || reminder.frequency === 'ONCE')) {
+        skippedCount++;
+        continue;
+      }
+
+      const pet = petsMap.get(reminder.petId);
+      const petName = pet?.name || 'tu mascota';
+
+      // Para recordatorios recurrentes, siempre reprogramar
+      if (reminder.frequency && reminder.frequency !== 'ONCE') {
+        await rescheduleRecurringNotification(reminder, petName);
+        syncedCount++;
+      } else {
+        // Para recordatorios únicos no completados
+        const scheduledDate = reminder.scheduledAt.toDate();
+        const now = new Date();
+        
+        // Solo programar si aún no ha pasado
+        if (scheduledDate > now) {
+          // Verificar si ya tiene notificación programada
+          const scheduled = await getAllScheduledNotifications();
+          const hasNotification = scheduled.some(n => n.content.data?.reminderId === reminder.id);
+          
+          if (!hasNotification) {
+            await scheduleNotification(
+              reminder.title,
+              `Recordatorio para ${petName}`,
+              scheduledDate,
+              {
+                reminderId: reminder.id,
+                petId: reminder.petId,
+                reminderType: reminder.type,
+                petName,
+              }
+            );
+            syncedCount++;
+          } else {
+            skippedCount++;
+          }
+        } else {
+          skippedCount++;
+        }
+      }
+    }
+
+    const stats = await getNotificationStats();
+    console.log(`[Notifications] ✅ Sync complete: ${syncedCount} synced, ${skippedCount} skipped, ${stats.total} total scheduled`);
+    if (stats.nextScheduled) {
+      console.log(`[Notifications] 📅 Next notification: ${stats.nextScheduled.toLocaleString()}`);
+    }
+  } catch (error) {
+    console.error('[Notifications] Error syncing notifications:', error);
+  }
+};
+
+/**
  * Debug: Listar todas las notificaciones programadas
  */
 export const debugListScheduledNotifications = async (): Promise<void> => {

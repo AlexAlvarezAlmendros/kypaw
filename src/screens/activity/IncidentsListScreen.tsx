@@ -420,9 +420,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginTop: spacing.sm,
     gap: spacing.xs,
+    alignItems: 'center',
   },
   categoryChip: {
-    height: 26,
+    alignSelf: 'flex-start',
   },
   description: {
     fontSize: 14,

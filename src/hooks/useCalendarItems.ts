@@ -54,7 +54,7 @@ const getReminderIcon = (type: string): string => {
     case 'GROOMING':
       return 'content-cut';
     case 'FOOD':
-      return 'food';
+      return 'bowl';
     case 'WALK':
       return 'walk';
     case 'TRAINING':
